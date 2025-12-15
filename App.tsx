@@ -1,4 +1,3 @@
-
 import React, { useState, useContext, useEffect } from 'react';
 import { HashRouter as Router, Route, Routes, Outlet, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -169,7 +168,6 @@ import WebhookSimulator from './components/WebhookSimulator';
 import LandingPage from './components/LandingPage';
 import TheBookView from './components/TheBookView';
 import KnowledgeBaseView from './components/KnowledgeBaseView';
-import CitiAuthGate from './components/CitiAuthGate';
 
 // --- Error Boundary ---
 interface ErrorBoundaryProps { children: React.ReactNode; }
@@ -292,11 +290,6 @@ const SAppLayout = () => {
             {activeView === View.ResourceGraph && <ResourceGraphView />}
             {activeView === View.ApiPlayground && <ApiPlaygroundView />}
             {activeView === View.ComplianceOracle && <ComplianceOracleView />}
-            {activeView === View.OpenBanking && <OpenBankingView />}
-            {activeView === View.FinancialDemocracy && <FinancialDemocracyView />}
-            {activeView === View.GlobalPositionMap && <GlobalPositionMap />}
-            {activeView === View.GlobalSsiHub && <GlobalSsiHubView />}
-            {activeView === View.Security && <SecurityView />}
 
             
             {/* --- ADMIN & TOOLS --- */}
@@ -374,7 +367,6 @@ const SAppLayout = () => {
             {activeView === View.WebhookSimulator && Wrapper(WebhookSimulator, { stripeAccountId: 'acct_mock' })}
 
             {/* Render component based on route if not covered by activeView switch (fallback) */}
-            <Outlet />
         </main>
       </div>
       
@@ -417,7 +409,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 // --- Main App Component ---
 function SApp() {
-  const mockPlaidClient = new PlaidClient();
 
   return (
     <ErrorBoundary>
