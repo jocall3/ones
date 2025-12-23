@@ -1,7 +1,5 @@
 
-
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '@mui/material/styles';
 import {
   Box,
@@ -11,7 +9,7 @@ import {
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
-import {
+import ReactFlow, {
   Zoom,
   useNodes,
   useEdges,
@@ -23,8 +21,11 @@ import {
   NodeTypes,
   EdgeTypes,
   addEdge,
+  Node,
+  Edge,
 } from 'reactflow';
-import 'reactflow/dist/style.css';
+// Styles loaded via index.html
+// import 'reactflow/dist/style.css';
 import {
   ChevronLeft,
   ChevronRight,
@@ -643,207 +644,7 @@ const nodeTypes: NodeTypes = {
   product_catalog_trial_offer: ProductCatalogTrialOfferNode,
 };
 
-const edgeTypes: EdgeTypes = {
-  default: DefaultEdge,
-  account: AccountEdge,
-  account_link: AccountLinkEdge,
-  apple_pay_domain: ApplePayDomainEdge,
-  application_fee: ApplicationFeeEdge,
-  apps_secret: AppsSecretEdge,
-  balance: BalanceEdge,
-  balance_transaction: BalanceTransactionEdge,
-  bank_account: BankAccountEdge,
-  billing_portal_configuration: BillingPortalConfigurationEdge,
-  billing_portal_session: BillingPortalSessionEdge,
-  capability: CapabilityEdge,
-  card: CardEdge,
-  cash_balance: CashBalanceEdge,
-  charge: ChargeEdge,
-  checkout_session: CheckoutSessionEdge,
-  country_spec: CountrySpecEdge,
-  coupon: CouponEdge,
-  credit_note: CreditNoteEdge,
-  credit_note_line_item: CreditNoteLineItemEdge,
-  customer: CustomerEdge,
-  customer_balance_transaction: CustomerBalanceTransactionEdge,
-  customer_cash_balance_transaction: CustomerCashBalanceTransactionEdge,
-  deleted_account: DeletedAccountEdge,
-  deleted_apple_pay_domain: DeletedApplePayDomainEdge,
-  deleted_coupon: DeletedCouponEdge,
-  deleted_customer: DeletedCustomerEdge,
-  deleted_discount: DeletedDiscountEdge,
-  deleted_external_account: DeletedExternalAccountEdge,
-  deleted_invoice: DeletedInvoiceEdge,
-  deleted_invoiceitem: DeletedInvoiceitemEdge,
-  deleted_payment_source: DeletedPaymentSourceEdge,
-  deleted_person: DeletedPersonEdge,
-  deleted_plan: DeletedPlanEdge,
-  deleted_product: DeletedProductEdge,
-  deleted_radar_value_list: DeletedRadarValueListEdge,
-  deleted_radar_value_list_item: DeletedRadarValueListItemEdge,
-  deleted_subscription_item: DeletedSubscriptionItemEdge,
-  deleted_tax_id: DeletedTaxIdEdge,
-  deleted_terminal_configuration: DeletedTerminalConfigurationEdge,
-  deleted_terminal_location: DeletedTerminalLocationEdge,
-  deleted_terminal_reader: DeletedTerminalReaderEdge,
-  deleted_test_helpers_test_clock: DeletedTestHelpersTestClockEdge,
-  deleted_webhook_endpoint: DeletedWebhookEndpointEdge,
-  discount: DiscountEdge,
-  dispute: DisputeEdge,
-  ephemeral_key: EphemeralKeyEdge,
-  event: EventEdge,
-  exchange_rate: ExchangeRateEdge,
-  external_account: ExternalAccountEdge,
-  fee_refund: FeeRefundEdge,
-  file: FileEdge,
-  file_link: FileLinkEdge,
-  financial_connections_account: FinancialConnectionsAccountEdge,
-  financial_connections_account_owner: FinancialConnectionsAccountOwnerEdge,
-  financial_connections_session: FinancialConnectionsSessionEdge,
-  funding_instructions: FundingInstructionsEdge,
-  identity_verification_report: IdentityVerificationReportEdge,
-  identity_verification_session: IdentityVerificationSessionEdge,
-  invoice: InvoiceEdge,
-  invoiceitem: InvoiceitemEdge,
-  issuing_authorization: IssuingAuthorizationEdge,
-  issuing_card: IssuingCardEdge,
-  issuing_cardholder: IssuingCardholderEdge,
-  issuing_dispute: IssuingDisputeEdge,
-  issuing_settlement: IssuingSettlementEdge,
-  issuing_transaction: IssuingTransactionEdge,
-  item: ItemEdge,
-  line_item: LineItemEdge,
-  login_link: LoginLinkEdge,
-  mandate: MandateEdge,
-  payment_intent: PaymentIntentEdge,
-  payment_link: PaymentLinkEdge,
-  payment_method: PaymentMethodEdge,
-  payment_source: PaymentSourceEdge,
-  payout: PayoutEdge,
-  person: PersonEdge,
-  plan: PlanEdge,
-  price: PriceEdge,
-  product: ProductEdge,
-  promotion_code: PromotionCodeEdge,
-  quote: QuoteEdge,
-  radar_early_fraud_warning: RadarEarlyFraudWarningEdge,
-  radar_value_list: RadarValueListEdge,
-  radar_value_list_item: RadarValueListItemEdge,
-  refund: RefundEdge,
-  reporting_report_run: ReportingReportRunEdge,
-  reporting_report_type: ReportingReportTypeEdge,
-  review: ReviewEdge,
-  scheduled_query_run: ScheduledQueryRunEdge,
-  setup_attempt: SetupAttemptEdge,
-  setup_intent: SetupIntentEdge,
-  shipping_rate: ShippingRateEdge,
-  source: SourceEdge,
-  source_mandate_notification: SourceMandateNotificationEdge,
-  source_transaction: SourceTransactionEdge,
-  subscription: SubscriptionEdge,
-  subscription_item: SubscriptionItemEdge,
-  subscription_schedule: SubscriptionScheduleEdge,
-  tax_code: TaxCodeEdge,
-  tax_id: TaxIdEdge,
-  tax_rate: TaxRateEdge,
-  terminal_configuration: TerminalConfigurationEdge,
-  terminal_connection_token: TerminalConnectionTokenEdge,
-  terminal_location: TerminalLocationEdge,
-  terminal_reader: TerminalReaderEdge,
-  test_helpers_test_clock: TestHelpersTestClockEdge,
-  token: TokenEdge,
-  topup: TopupEdge,
-  transfer: TransferEdge,
-  transfer_reversal: TransferReversalEdge,
-  treasury_credit_reversal: TreasuryCreditReversalEdge,
-  treasury_debit_reversal: TreasuryDebitReversalEdge,
-  treasury_financial_account: TreasuryFinancialAccountEdge,
-  treasury_financial_account_features: TreasuryFinancialAccountFeaturesEdge,
-  treasury_inbound_transfer: TreasuryInboundTransferEdge,
-  treasury_outbound_payment: TreasuryOutboundPaymentEdge,
-  treasury_outbound_transfer: TreasuryOutboundTransferEdge,
-  treasury_received_credit: TreasuryReceivedCreditEdge,
-  treasury_received_debit: TreasuryReceivedDebitEdge,
-  treasury_transaction: TreasuryTransactionEdge,
-  treasury_transaction_entry: TreasuryTransactionEntryEdge,
-  webhook_endpoint: WebhookEndpointEdge,
-  account_notice: AccountNoticeEdge,
-  account_session: AccountSessionEdge,
-  application: ApplicationEdge,
-  balance_settings: BalanceSettingsEdge,
-  billing_alert: BillingAlertEdge,
-  billing_alert_triggered: BillingAlertTriggeredEdge,
-  billing_credit_balance_summary: BillingCreditBalanceSummaryEdge,
-  billing_credit_balance_transaction: BillingCreditBalanceTransactionEdge,
-  billing_credit_grant: BillingCreditGrantEdge,
-  billing_meter: BillingMeterEdge,
-  billing_meter_event: BillingMeterEventEdge,
-  billing_meter_event_adjustment: BillingMeterEventAdjustmentEdge,
-  billing_meter_event_summary: BillingMeterEventSummaryEdge,
-  capital_financing_offer: CapitalFinancingOfferEdge,
-  capital_financing_summary: CapitalFinancingSummaryEdge,
-  capital_financing_transaction: CapitalFinancingTransactionEdge,
-  climate_order: ClimateOrderEdge,
-  climate_product: ClimateProductEdge,
-  climate_supplier: ClimateSupplierEdge,
-  confirmation_token: ConfirmationTokenEdge,
-  customer_session: CustomerSessionEdge,
-  deleted_application: DeletedApplicationEdge,
-  deleted_bank_account: DeletedBankAccountEdge,
-  deleted_card: DeletedCardEdge,
-  deleted_price: DeletedPriceEdge,
-  deleted_product_feature: DeletedProductFeatureEdge,
-  entitlements_active_entitlement: EntitlementsActiveEntitlementEdge,
-  entitlements_active_entitlement_summary: EntitlementsActiveEntitlementSummaryEdge,
-  entitlements_feature: EntitlementsFeatureEdge,
-  financial_connections_account_inferred_balance: FinancialConnectionsAccountInferredBalanceEdge,
-  financial_connections_account_ownership: FinancialConnectionsAccountOwnershipEdge,
-  financial_connections_institution: FinancialConnectionsInstitutionEdge,
-  financial_connections_transaction: FinancialConnectionsTransactionEdge,
-  forwarding_request: ForwardingRequestEdge,
-  fx_quote: FxQuoteEdge,
-  invoice_payment: InvoicePaymentEdge,
-  invoice_rendering_template: InvoiceRenderingTemplateEdge,
-  issuing_credit_underwriting_record: IssuingCreditUnderwritingRecordEdge,
-  issuing_dispute_settlement_detail: IssuingDisputeSettlementDetailEdge,
-  issuing_fraud_liability_debit: IssuingFraudLiabilityDebitEdge,
-  issuing_personalization_design: IssuingPersonalizationDesignEdge,
-  issuing_physical_bundle: IssuingPhysicalBundleEdge,
-  issuing_token: IssuingTokenEdge,
-  margin: MarginEdge,
-  order: OrderEdge,
-  payment_attempt_record: PaymentAttemptRecordEdge,
-  payment_intent_amount_details_line_item: PaymentIntentAmountDetailsLineItemEdge,
-  payment_method_configuration: PaymentMethodConfigurationEdge,
-  payment_method_domain: PaymentMethodDomainEdge,
-  payment_record: PaymentRecordEdge,
-  privacy_redaction_job: PrivacyRedactionJobEdge,
-  privacy_redaction_job_validation_error: PrivacyRedactionJobValidationErrorEdge,
-  product_feature: ProductFeatureEdge,
-  quote_line: QuoteLineEdge,
-  quote_preview_invoice: QuotePreviewInvoiceEdge,
-  quote_preview_subscription_schedule: QuotePreviewSubscriptionScheduleEdge,
-  tax_association: TaxAssociationEdge,
-  tax_calculation: TaxCalculationEdge,
-  tax_calculation_line_item: TaxCalculationLineItemEdge,
-  tax_form: TaxFormEdge,
-  tax_registration: TaxRegistrationEdge,
-  tax_settings: TaxSettingsEdge,
-  tax_transaction: TaxTransactionEdge,
-  tax_transaction_line_item: TaxTransactionLineItemEdge,
-  terminal_reader_collected_data: TerminalReaderCollectedDataEdge,
-  terminal_onboarding_link: TerminalOnboardingLinkEdge,
-  billing_analytics_meter_usage: BillingAnalyticsMeterUsageEdge,
-  billing_analytics_meter_usage_row: BillingAnalyticsMeterUsageRowEdge,
-  payment_method_balance: PaymentMethodBalanceEdge,
-  delegated_checkout_requested_session: DelegatedCheckoutRequestedSessionEdge,
-  identity_blocklist_entry: IdentityBlocklistEntryEdge,
-  transit_balance: TransitBalanceEdge,
-  issuing_program: IssuingProgramEdge,
-  balance_transfer: BalanceTransferEdge,
-  radar_account_evaluation: RadarAccountEvaluationEdge,
-  product_catalog_trial_offer: ProductCatalogTrialOfferEdge,
-};
+const edgeTypes: EdgeTypes = {};
 
 const defaultNodeWidth = 200;
 const defaultNodeHeight = 100;
@@ -861,22 +662,96 @@ const getNodesAndEdges = (
   const nodes: any[] = [];
   const edges: any[] = [];
 
-  if (!data || !resourceType) {
+  if (!data) {
     return { nodes, edges };
   }
 
-  // Dummy implementation for placeholder function to allow component rendering.
-  // In a real app, this would contain logic to traverse the graph data.
+  let yOffset = 0;
+  let xOffset = 0;
+
+  // Simple layout logic to prevent overlap and organize nodes
+  Object.values(data).forEach((resource, index) => {
+    const nodeId = resource.id;
+    const type = resource.object; // e.g., 'customer', 'charge'
+    
+    // Map resource object types to our node types.
+    // The keys in nodeTypes are expected to match resource.object (e.g. 'charge', 'customer')
+    // or we can add a fallback.
+    
+    // We add a basic node for the resource
+    nodes.push({
+      id: nodeId,
+      type: type, // This must match keys in nodeTypes
+      position: { x: xOffset, y: yOffset },
+      data: { label: resource.id, ...resource },
+    });
+
+    // Create edges based on relationships found in the resource
+    // This is a simplified traversal for demonstration
+    if (resource.customer && typeof resource.customer === 'string') {
+        edges.push({
+            id: `${nodeId}-${resource.customer}`,
+            source: resource.customer, // source is customer
+            target: nodeId, // target is current resource (e.g. charge belonging to customer)
+            type: 'default',
+        });
+    }
+    
+    if (resource.charge && typeof resource.charge === 'string') {
+        // e.g. Invoice -> Charge
+         edges.push({
+            id: `${nodeId}-${resource.charge}`,
+            source: nodeId,
+            target: resource.charge,
+            type: 'default',
+        });
+    }
+
+    // Grid layout adjustments
+    xOffset += 300;
+    if ((index + 1) % 4 === 0) {
+        xOffset = 0;
+        yOffset += 200;
+    }
+  });
 
   return { nodes, edges };
 };
 
 const ResourceGraphView = () => {
-  return (
-    <div style={{ height: '600px', border: '1px solid #ccc' }}>
-      <p style={{ padding: '20px', textAlign: 'center' }}>Resource Graph View Placeholder</p>
-    </div>
-  );
-};
+    const { data, loading, error } = useStripeData();
+    const [nodes, setNodes] = useState<Node[]>([]);
+    const [edges, setEdges] = useState<Edge[]>([]);
+    
+    useEffect(() => {
+        if(data) {
+            const { nodes: n, edges: e } = getNodesAndEdges(data, null, 200, 100);
+            setNodes(n);
+            setEdges(e);
+        }
+    }, [data]);
+
+    if(loading) return <div className="flex justify-center items-center h-full"><CircularProgress /></div>;
+    if(error) return <div className="text-red-500 p-4">Error: {error}</div>;
+
+    return (
+        <div style={{ height: '800px', border: '1px solid #333', borderRadius: '8px', overflow: 'hidden' }}>
+            <ReactFlowProvider>
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    nodeTypes={nodeTypes}
+                    edgeTypes={edgeTypes}
+                    fitView
+                    attributionPosition="bottom-right"
+                >
+                    <Background color="#aaa" gap={16} />
+                    <Controls />
+                    <MiniMap />
+                </ReactFlow>
+            </ReactFlowProvider>
+        </div>
+    );
+}
 
 export default ResourceGraphView;

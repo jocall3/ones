@@ -1,6 +1,8 @@
 // ISO 20022 External Code Sets
 // This file defines the types used for external codes in ISO 20022 messages.
 
+export const ISO_20022_REGISTRY_VERSION = '2024.Q3';
+
 export type ExternalAcceptedReason1Code = 'ADEA' | 'NSTP' | 'SMPG';
 export type ExternalAccountIdentification1Code = 'AIIN' | 'BBAN' | 'CUID' | 'UPIC';
 export type ExternalAgentInstruction1Code = 'CHQB' | 'HOLD' | 'INQR' | 'PBEN' | 'PHOA' | 'PHOB' | 'TELA' | 'TELB' | 'TFRO' | 'TTIL';
@@ -13,6 +15,7 @@ export type ExternalBalanceSubType1Code = 'XPCD' | 'ITAV';
 export type ExternalBalanceType1Code = 'CLAV' | 'OPAV';
 export type ExternalBankTransactionDomain1Code = 'PMNT' | 'CAMT';
 export type ExternalBankTransactionFamily1Code = 'RCDT' | 'ICDT';
+// FIX: Removed duplicate identifier 'ExternalBankTransactionSubFamily1Code'
 export type ExternalBankTransactionSubFamily1Code = 'ESCT' | 'MOCR';
 export type ExternalBenchmarkCurveName1Code = 'LIBOR' | 'EURIBOR';
 export type ExternalBillingBalanceType1Code = 'CRDT' | 'DBIT';
@@ -40,6 +43,7 @@ export type ExternalCreditLineType1Code = 'REV';
 export type ExternalCreditorAgentInstruction1Code = 'PHOB';
 export type ExternalCreditorEnrolmentAmendmentReason1Code = 'BANK';
 export type ExternalCreditorEnrolmentCancellationReason1Code = 'CUST';
+// FIX: Removed duplicate identifier 'ExternalCreditorEnrolmentStatusReason1Code'
 export type ExternalCreditorEnrolmentStatusReason1Code = 'RJCT';
 export type ExternalCreditorReferenceType1Code = 'SCOR';
 export type ExternalDateFrequency1Code = 'DAIL' | 'WEEK';

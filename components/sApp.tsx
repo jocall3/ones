@@ -1,6 +1,6 @@
 
 import React, { useState, useContext, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Outlet, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes, Outlet, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Cpu, AlertTriangle } from 'lucide-react';
@@ -172,11 +172,12 @@ import KnowledgeBaseView from './KnowledgeBaseView';
 import CitiAuthGate from './CitiAuthGate';
 
 // --- Error Boundary ---
-interface ErrorBoundaryProps { children: React.ReactNode; }
+interface ErrorBoundaryProps { children?: React.ReactNode; }
 interface ErrorBoundaryState { hasError: boolean; }
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public props: ErrorBoundaryProps;
   state: ErrorBoundaryState = { hasError: false };
-  constructor(props: ErrorBoundaryProps) { super(props); }
+  constructor(props: ErrorBoundaryProps) { super(props); this.props = props; }
   static getDerivedStateFromError(error: Error) { console.error("ErrorBoundary caught:", error); return { hasError: true }; }
   render() { return this.state.hasError ? <h1>Something went wrong.</h1> : this.props.children; }
 }
@@ -367,6 +368,7 @@ const SAppLayout = () => {
             {activeView === View.TransactionFilter && Wrapper(TransactionFilter, { onApplyFilters: () => {} })}
             {activeView === View.TransactionList && Wrapper(TransactionList, { transactions: [] })}
             {activeView === View.TreasuryTransactionList && Wrapper(TreasuryTransactionList, { transactions: [] })}
+            {activeView === View.TreasuryView && <TreasuryView />}
             {activeView === View.UniversalObjectInspector && Wrapper(UniversalObjectInspector, { data: { sample: 'data' } })}
             {activeView === View.VirtualAccountForm && Wrapper(VirtualAccountForm, { onSubmit: () => {}, isSubmitting: false })}
             {/* VirtualAccountsDashboard is covered */}
@@ -408,7 +410,7 @@ const DataContextWrapper = (Component: React.FC<any>, extraProps: any = {}) => {
 const theme = createTheme({ palette: { mode: 'dark' } });
 
 // --- Protected Route Helper ---
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
     const { isAuthenticated } = useContext(AuthContext)!;
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;

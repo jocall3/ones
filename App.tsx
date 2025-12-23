@@ -170,13 +170,14 @@ import TheBookView from './components/TheBookView';
 import KnowledgeBaseView from './components/KnowledgeBaseView';
 
 // --- Error Boundary ---
-interface ErrorBoundaryProps { children: React.ReactNode; }
+interface ErrorBoundaryProps { children?: React.ReactNode; }
 interface ErrorBoundaryState { hasError: boolean; }
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public props: ErrorBoundaryProps;
   state: ErrorBoundaryState = { hasError: false };
-  constructor(props: ErrorBoundaryProps) { super(props); }
+  constructor(props: ErrorBoundaryProps) { super(props); this.props = props; }
   static getDerivedStateFromError(error: Error) { console.error("ErrorBoundary caught:", error); return { hasError: true }; }
-  render() { return this.state.hasError ? <h1>Something went wrong.</h1> : this.props.children; }
+  render() { return this.state.hasError ? <div className="p-20 text-center text-red-500 font-bold">CRITICAL SYSTEM ERROR. REBOOT REQUIRED.</div> : this.props.children; }
 }
 
 // --- Layout ---
@@ -186,7 +187,7 @@ const SAppLayout = () => {
   const { isAuthenticated } = useContext(AuthContext)!;
 
   if (!dataContext) {
-    return <div>Error: DataContext not found.</div>;
+    return <div className="h-screen flex items-center justify-center text-red-500">Error: DataContext not found.</div>;
   }
 
   const { isLoading, error, activeView, setActiveView } = dataContext;
@@ -241,10 +242,6 @@ const SAppLayout = () => {
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
         
         <main className="w-full flex-grow p-6">
-            {/* 
-              This section conditionally renders the 'Active View' from DataContext.
-              This mimics a single-page app dashboard where the sidebar controls the content area.
-            */}
             {activeView === View.Dashboard && <Dashboard />}
             {activeView === View.Transactions && <TransactionsView />}
             {activeView === View.SendMoney && <SendMoneyView setActiveView={setActiveView} />}
@@ -290,9 +287,14 @@ const SAppLayout = () => {
             {activeView === View.ResourceGraph && <ResourceGraphView />}
             {activeView === View.ApiPlayground && <ApiPlaygroundView />}
             {activeView === View.ComplianceOracle && <ComplianceOracleView />}
+            {activeView === View.OpenBanking && <OpenBankingView />}
+            {activeView === View.FinancialDemocracy && <FinancialDemocracyView />}
+            {activeView === View.GlobalPositionMap && <GlobalPositionMap />}
+            {activeView === View.GlobalSsiHub && <GlobalSsiHubView />}
+            {activeView === View.Security && <SecurityView />}
+            {activeView === View.VentureCapitalDeskView && <VentureCapitalDeskView />}
 
-            
-            {/* --- ADMIN & TOOLS --- */}
+            {/* Admin & Tools */}
             {activeView === View.CustomerDashboard && <CustomerDashboard />}
             {activeView === View.VerificationReports && <VerificationReportsView customerId="cust_1" />}
             {activeView === View.FinancialReporting && <FinancialReportingView />}
@@ -302,7 +304,7 @@ const SAppLayout = () => {
             {activeView === View.TheBook && <TheBookView />}
             {activeView === View.KnowledgeBase && <KnowledgeBaseView />}
             
-            {/* --- ALL COMPONENTS DIRECT ACCESS --- */}
+            {/* Direct Access Fallbacks */}
             {activeView === View.AccountDetails && Wrapper(AccountDetails, { accountId: '1', customerId: 'c1' })}
             {activeView === View.AccountList && Wrapper(AccountList, { accounts: [] })}
             {activeView === View.AccountStatementGrid && Wrapper(AccountStatementGrid, { statementLines: [] })}
@@ -315,15 +317,12 @@ const SAppLayout = () => {
             {activeView === View.AutomatedSweepRules && <AutomatedSweepRules />}
             {activeView === View.BalanceReportChart && Wrapper(BalanceReportChart, { data: [] })}
             {activeView === View.BalanceTransactionTable && Wrapper(BalanceTransactionTable, { balanceTransactions: [] })}
-            {/* BudgetsView is already covered */}
             {activeView === View.CardDesignVisualizer && Wrapper(CardDesignVisualizer, { design: { id: 'd_1', physical_bundle: { features: {} } } })}
-            {/* CardholderManagement is already covered */}
             {activeView === View.ChargeDetailModal && ModalWrapper(ChargeDetailModal, { charge: {id: 'ch_1'}, onClose: () => {}})}
             {activeView === View.ChargeList && <ChargeList />}
             {activeView === View.ConductorConfigurationView && <ConductorConfigurationView />}
             {activeView === View.CounterpartyDetails && Wrapper(CounterpartyDetails, { counterpartyId: 'cp_1' })}
             {activeView === View.CounterpartyForm && Wrapper(CounterpartyForm, { counterparties: [], onSubmit: () => {}, onCancel: () => {} })}
-            {/* CounterpartyList is covered in CounterpartyDashboard */}
             {activeView === View.DisruptionIndexMeter && Wrapper(DisruptionIndexMeter, { indexValue: 50 })}
             {activeView === View.DocumentUploader && Wrapper(DocumentUploader, { documentableType: 'test', documentableId: '1' })}
             {activeView === View.DownloadLink && Wrapper(DownloadLink, { url: '#', filename: 'test.pdf' })}
@@ -336,13 +335,10 @@ const SAppLayout = () => {
             {activeView === View.ExternalAccountsTable && Wrapper(ExternalAccountsTable, { accounts: [] })}
             {activeView === View.FinancialAccountCard && Wrapper(FinancialAccountCard, { financialAccount: {id: 'fa_1', balance: { cash: {}}, supported_currencies: []}})}
             {activeView === View.IncomingPaymentDetailList && <IncomingPaymentDetailList />}
-            {/* InvestmentForm is covered in VentureCapital */}
-            {/* InvestmentPortfolio is covered in Investments */}
             {activeView === View.InvoiceFinancingRequest && Wrapper(InvoiceFinancingRequest, { onSubmit: () => {} })}
             {activeView === View.PaymentInitiationForm && <PaymentInitiationForm />}
             {activeView === View.PaymentMethodDetails && Wrapper(PaymentMethodDetails, { details: { type: 'card', card: {} }})}
             {activeView === View.PaymentOrderForm && Wrapper(PaymentOrderForm, { internalAccounts: [], externalAccounts: [], onSubmit: () => {}, onCancel: () => {} })}
-            {/* PayoutsDashboard is covered */}
             {activeView === View.PnLChart && Wrapper(PnLChart, { data: [], algorithmName: 'Test' })}
             {activeView === View.RefundForm && <RefundForm />}
             {activeView === View.RemittanceInfoEditor && Wrapper(RemittanceInfoEditor, { onChange: () => {} })}
@@ -350,7 +346,6 @@ const SAppLayout = () => {
             {activeView === View.ReportRunGenerator && <ReportRunGenerator />}
             {activeView === View.ReportStatusIndicator && Wrapper(ReportStatusIndicator, { status: 'success' })}
             {activeView === View.SsiEditorForm && Wrapper(SsiEditorForm, { onSubmit: () => {}, onCancel: () => {} })}
-            {/* StripeNexusView is covered */}
             {activeView === View.StripeStatusBadge && Wrapper(StripeStatusBadge, { status: 'succeeded', objectType: 'charge' })}
             {activeView === View.StructuredPurposeInput && Wrapper(StructuredPurposeInput, { onChange: () => {}, value: null })}
             {activeView === View.SubscriptionList && Wrapper(SubscriptionList, { subscriptions: [] })}
@@ -359,14 +354,12 @@ const SAppLayout = () => {
             {activeView === View.TransactionFilter && Wrapper(TransactionFilter, { onApplyFilters: () => {} })}
             {activeView === View.TransactionList && Wrapper(TransactionList, { transactions: [] })}
             {activeView === View.TreasuryTransactionList && Wrapper(TreasuryTransactionList, { transactions: [] })}
+            {activeView === View.TreasuryView && <TreasuryView />}
             {activeView === View.UniversalObjectInspector && Wrapper(UniversalObjectInspector, { data: { sample: 'data' } })}
             {activeView === View.VirtualAccountForm && Wrapper(VirtualAccountForm, { onSubmit: () => {}, isSubmitting: false })}
-            {/* VirtualAccountsDashboard is covered */}
             {activeView === View.VirtualAccountsTable && Wrapper(VirtualAccountsTable, { onEdit: () => {}, onDelete: () => {} })}
             {activeView === View.VoiceControl && DataContextWrapper(VoiceControl)}
             {activeView === View.WebhookSimulator && Wrapper(WebhookSimulator, { stripeAccountId: 'acct_mock' })}
-
-            {/* Render component based on route if not covered by activeView switch (fallback) */}
         </main>
       </div>
       
@@ -399,7 +392,7 @@ const DataContextWrapper = (Component: React.FC<any>, extraProps: any = {}) => {
 const theme = createTheme({ palette: { mode: 'dark' } });
 
 // --- Protected Route Helper ---
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
     const { isAuthenticated } = useContext(AuthContext)!;
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
@@ -409,7 +402,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 // --- Main App Component ---
 function SApp() {
-
   return (
     <ErrorBoundary>
       <AuthProvider>
@@ -430,14 +422,8 @@ function SApp() {
                             <SAppLayout />
                         </ProtectedRoute>
                     }>
-                      {/* The Dashboard is the default view for the app layout */}
+                      <Route index element={<Dashboard />} />
                       <Route path="/dashboard" element={<Dashboard />} />
-                      
-                      {/* Dynamically Generated Routes */}
-                      <Route path="/account-details" element={Wrapper(AccountDetails, { accountId: '1', customerId: 'c1' })} />
-                      <Route path="/account-list" element={Wrapper(AccountList, { accounts: [] })} />
-                      <Route path="/accounts-dashboard" element={<AccountsDashboardView />} />
-                      
                       <Route path="*" element={<Dashboard />} />
                     </Route>
                   </Routes>

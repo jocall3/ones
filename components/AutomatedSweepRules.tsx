@@ -12,8 +12,7 @@ import {
   NumberInput,
   NumberInputField,
   NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
+  NumberInputStepperProps,
   Switch,
   useToast,
   Table,
@@ -26,7 +25,7 @@ import {
   IconButton,
   Flex,
 } from '@chakra-ui/react';
-import { AddIcon, DeleteIcon } from '@chakra-ui/icons';
+import { Plus as AddIcon, Trash2 as DeleteIcon } from 'lucide-react';
 
 // Define TypeScript types based on the ISO 20022 schema structure, focusing on relevant codes for sweep rules
 // These are placeholders derived from the available External codes, assuming some relate to 'Purpose' or 'BalanceType'
@@ -163,7 +162,7 @@ const AutomatedSweepRules: React.FC = () => {
       <Td>
         <IconButton
           aria-label="Delete rule"
-          icon={<DeleteIcon />}
+          icon={<DeleteIcon size={16} />}
           size="sm"
           colorScheme="red"
           onClick={() => handleDeleteRule(rule.id)}
@@ -211,10 +210,6 @@ const AutomatedSweepRules: React.FC = () => {
             precision={2}
           >
             <NumberInputField />
-            <NumberInputStepper>
-              <NumberIncrementStepper />
-              <NumberDecrementStepper />
-            </NumberInputStepper>
           </NumberInput>
         </FormControl>
 
@@ -239,7 +234,7 @@ const AutomatedSweepRules: React.FC = () => {
           />
         </FormControl>
         <Button
-          leftIcon={<AddIcon />}
+          leftIcon={<AddIcon size={16} />}
           colorScheme="blue"
           onClick={handleAddRule}
         >

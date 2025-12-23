@@ -1,18 +1,18 @@
-
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Scan, Shield, Lock, ArrowRight, AlertTriangle, Fingerprint, Eye, Terminal, UserPlus, User, Infinity } from 'lucide-react';
+import { Scan, Shield, Lock, ArrowRight, AlertTriangle, Fingerprint, Eye, Terminal, UserPlus, User, Infinity, Building2, Globe } from 'lucide-react';
 import { db } from '../lib/SovereignDatabase';
 
 export const LoginView: React.FC = () => {
-    const { loginWithCredentials, loginWithBiometrics, isAuthenticated, isLoading } = useContext(AuthContext)!;
+    const { loginWithCredentials, loginWithBiometrics, loginWithSSO, isAuthenticated, isLoading } = useContext(AuthContext)!;
     const navigate = useNavigate();
     const [email, setEmail] = useState('visionary@sovereign-ai-nexus.io');
     const [password, setPassword] = useState('');
     const [isBiometricScanning, setIsBiometricScanning] = useState(false);
+    const [isSSOProcessing, setIsSSOProcessing] = useState(false);
     const [scanProgress, setScanProgress] = useState(0);
-    const [authMethod, setAuthMethod] = useState<'credentials' | 'biometric' | 'register'>('biometric');
+    const [authMethod, setAuthMethod] = useState<'credentials' | 'biometric' | 'register' | 'sso'>('sso');
     
     // Registration State
     const [regName, setRegName] = useState('');
@@ -40,6 +40,21 @@ export const LoginView: React.FC = () => {
                 loginWithBiometrics().finally(() => setIsBiometricScanning(false));
             }
         }, 150);
+    };
+
+    // Simulate Auth0 SSO Redirect and JWT Handshake
+    const handleSSOAuth = async () => {
+        if (isSSOProcessing) return;
+        setIsSSOProcessing(true);
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 5;
+            setScanProgress(progress);
+            if (progress >= 100) {
+                clearInterval(interval);
+                loginWithSSO().finally(() => setIsSSOProcessing(false));
+            }
+        }, 100);
     };
 
     const handleCredentialAuth = (e: React.FormEvent) => {
@@ -100,6 +115,53 @@ export const LoginView: React.FC = () => {
                     {/* Auth Methods */}
                     <div className="p-8 space-y-6">
                         
+                        {/* Auth0 Enterprise SSO */}
+                        {authMethod === 'sso' && (
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="text-center space-y-2">
+                                    <h3 className="text-lg font-bold text-white flex items-center justify-center gap-2">
+                                        <Building2 className="w-5 h-5 text-blue-400" /> Citi Connect SSO
+                                    </h3>
+                                    <p className="text-xs text-gray-400">
+                                        Authorize via Auth0 Federated Identity Management
+                                    </p>
+                                </div>
+
+                                {isSSOProcessing ? (
+                                    <div className="space-y-4 py-8">
+                                        <div className="flex flex-col items-center justify-center gap-4">
+                                            <div className="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+                                            <div className="text-center">
+                                                <p className="text-sm font-mono text-blue-400">SECURE REDIRECT...</p>
+                                                <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-tighter">
+                                                    Issuer: citibankdemobusinessinc.us.auth0.com
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+                                            <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${scanProgress}%` }} />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <button 
+                                            onClick={handleSSOAuth}
+                                            className="w-full group relative flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                                        >
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                                            <Globe className="w-5 h-5" />
+                                            Sign in with Citi ID
+                                        </button>
+                                        <div className="p-3 bg-gray-900/50 border border-gray-700 rounded-lg text-[10px] font-mono text-gray-500">
+                                            <p className="flex justify-between"><span>ALGORITHM:</span> <span>RS256</span></p>
+                                            <p className="flex justify-between mt-1"><span>DOMAIN:</span> <span className="truncate ml-4 text-blue-400/70">citibankdemobusinessinc...</span></p>
+                                            <p className="flex justify-between mt-1"><span>CLIENT ID:</span> <span className="truncate ml-4 text-blue-400/70">rsBLCcuq5MVA9Dj84N...</span></p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Biometric Scanner */}
                         {authMethod === 'biometric' && (
                             <div className="flex flex-col items-center justify-center space-y-6 py-4 animate-in fade-in zoom-in duration-300">
@@ -179,18 +241,24 @@ export const LoginView: React.FC = () => {
                         )}
 
                         {/* Footer Controls */}
-                        <div className="pt-6 border-t border-gray-800 flex justify-between text-xs font-mono text-gray-500">
+                        <div className="pt-6 border-t border-gray-800 flex flex-wrap justify-between gap-4 text-[10px] font-mono text-gray-500 uppercase tracking-tighter">
                             {authMethod !== 'register' ? (
                                 <>
-                                    <button onClick={() => setAuthMethod(authMethod === 'biometric' ? 'credentials' : 'biometric')} className="hover:text-cyan-400 transition-colors flex items-center gap-2">
-                                        {authMethod === 'biometric' ? <><Lock className="w-3 h-3"/> Use Password</> : <><Eye className="w-3 h-3"/> Use Biometrics</>}
+                                    <button onClick={() => setAuthMethod('sso')} className={`hover:text-blue-400 transition-colors flex items-center gap-1.5 ${authMethod === 'sso' ? 'text-blue-400' : ''}`}>
+                                        <Globe className="w-2.5 h-2.5"/> Enterprise SSO
                                     </button>
-                                    <button onClick={() => setAuthMethod('register')} className="hover:text-cyan-400 transition-colors flex items-center gap-2">
-                                        Create Account <ArrowRight className="w-3 h-3"/>
+                                    <button onClick={() => setAuthMethod('biometric')} className={`hover:text-cyan-400 transition-colors flex items-center gap-1.5 ${authMethod === 'biometric' ? 'text-cyan-400' : ''}`}>
+                                        <Fingerprint className="w-2.5 h-2.5"/> Biometrics
+                                    </button>
+                                    <button onClick={() => setAuthMethod('credentials')} className={`hover:text-white transition-colors flex items-center gap-1.5 ${authMethod === 'credentials' ? 'text-white' : ''}`}>
+                                        <Lock className="w-2.5 h-2.5"/> Password
+                                    </button>
+                                    <button onClick={() => setAuthMethod('register')} className="hover:text-indigo-400 transition-colors flex items-center gap-1.5">
+                                        <UserPlus className="w-2.5 h-2.5"/> Register
                                     </button>
                                 </>
                             ) : (
-                                <button onClick={() => setAuthMethod('credentials')} className="hover:text-cyan-400 transition-colors flex items-center gap-2">
+                                <button onClick={() => setAuthMethod('sso')} className="hover:text-blue-400 transition-colors flex items-center gap-2">
                                     <ArrowRight className="w-3 h-3 rotate-180"/> Back to Login
                                 </button>
                             )}

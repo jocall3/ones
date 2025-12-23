@@ -1,439 +1,205 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, TextField, Button, Grid, Card, CardContent, IconButton, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Input,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from './ui/index';
+import { PlusCircle, Edit2, Trash2, ArrowUp, ArrowDown, Settings2 } from 'lucide-react';
+
+interface Rule {
+  id: string;
+  name: string;
+  description: string;
+  priority: number;
+  conditions: { field: string; operator: string; value: string }[];
+  actions: { type: string; value: string }[];
+}
 
 const ConductorConfigurationView: React.FC = () => {
-    const [rules, setRules] = useState<any[]>([]);
-    const [newRule, setNewRule] = useState<any>({
-        name: '',
-        description: '',
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentRule, setCurrentRule] = useState<Rule | null>(null);
+
+  useEffect(() => {
+    setRules([
+      {
+        id: 'rule-1',
+        name: 'High Priority Rails',
+        description: 'Route immediate wires to premium nodes.',
         priority: 1,
-        conditions: [{ field: '', operator: '=', value: '' }],
-        actions: [{ type: '', value: '' }]
-    });
-    const [editDialogOpen, setEditDialogOpen] = useState(false);
-    const [currentRule, setCurrentRule] = useState<any>(null);
-    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+        conditions: [{ field: 'priority', operator: '=', value: 'HIGH' }],
+        actions: [{ type: 'ROUTING', value: 'QUANTUM_PRIMARY' }],
+      },
+      {
+        id: 'rule-2',
+        name: 'Low Value Batching',
+        description: 'Aggregate small payments for fee optimization.',
+        priority: 2,
+        conditions: [{ field: 'amount', operator: '<', value: '100' }],
+        actions: [{ type: 'ROUTING', value: 'BATCH_RECONCILIATION' }],
+      },
+    ]);
+  }, []);
 
-    // Mock API calls (replace with actual API calls)
-    useEffect(() => {
-        // Fetch rules on component mount
-        const fetchRules = async () => {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 500));
-            setRules([
-                { id: 'rule-1', name: 'High Priority Payments', description: 'Route high priority payments to immediate processing', priority: 1, conditions: [{ field: 'payment.priority', operator: '=', value: 'HIGH' }], actions: [{ type: 'ROUTING', value: 'IMMEDIATE_QUEUE' }] },
-                { id: 'rule-2', name: 'Low Value Transactions', description: 'Route low value transactions to batch processing', priority: 3, conditions: [{ field: 'payment.amount', operator: '<', value: '100' }], actions: [{ type: 'ROUTING', value: 'BATCH_PROCESSING' }] },
-            ]);
-        };
-        fetchRules();
-    }, []);
-
-    const handleAddRule = () => {
-        setRules([...rules, { ...newRule, id: `rule-${Date.now()}` }]);
-        setNewRule({ name: '', description: '', priority: 1, conditions: [{ field: '', operator: '=', value: '' }], actions: [{ type: '', value: '' }] });
+  const handleAddRule = () => {
+    const newRule: Rule = {
+      id: `rule-${Date.now()}`,
+      name: 'New Routing Rule',
+      description: 'Configure routing logic here.',
+      priority: rules.length + 1,
+      conditions: [{ field: 'payment.type', operator: '=', value: 'ach' }],
+      actions: [{ type: 'ROUTING', value: 'STANDARD_QUEUE' }],
     };
+    setRules([...rules, newRule]);
+  };
 
-    const handleEditRule = (rule: any) => {
-        setCurrentRule({ ...rule });
-        setEditingIndex(rules.findIndex(r => r.id === rule.id));
-        setEditDialogOpen(true);
-    };
+  const handleDeleteRule = (id: string) => {
+    setRules(rules.filter((r) => r.id !== id));
+  };
 
-    const handleSaveEdit = () => {
-        if (currentRule && editingIndex !== null) {
-            const updatedRules = [...rules];
-            updatedRules[editingIndex] = currentRule;
-            setRules(updatedRules);
-            setEditDialogOpen(false);
-            setCurrentRule(null);
-            setEditingIndex(null);
-        }
-    };
+  const handleMoveRule = (index: number, direction: 'up' | 'down') => {
+    const newRules = [...rules];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newRules.length) return;
+    
+    [newRules[index], newRules[targetIndex]] = [newRules[targetIndex], newRules[index]];
+    setRules(newRules);
+  };
 
-    const handleDeleteRule = (ruleId: string) => {
-        setRules(rules.filter(rule => rule.id !== ruleId));
-    };
+  const openEdit = (rule: Rule) => {
+    setCurrentRule(rule);
+    setIsEditDialogOpen(true);
+  };
 
-    const handleConditionChange = (index: number, field: string, value: string) => {
-        if (currentRule) {
-            const updatedConditions = [...currentRule.conditions];
-            updatedConditions[index] = { ...updatedConditions[index], [field]: value };
-            setCurrentRule({ ...currentRule, conditions: updatedConditions });
-        }
-    };
+  const saveEdit = () => {
+    if (currentRule) {
+      setRules(rules.map((r) => (r.id === currentRule.id ? currentRule : r)));
+      setIsEditDialogOpen(false);
+      setCurrentRule(null);
+    }
+  };
 
-    const handleActionChange = (index: number, field: string, value: string) => {
-        if (currentRule) {
-            const updatedActions = [...currentRule.actions];
-            updatedActions[index] = { ...updatedActions[index], [field]: value };
-            setCurrentRule({ ...currentRule, actions: updatedActions });
-        }
-    };
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+            <Settings2 className="text-cyan-400" /> Payment Conductor
+          </h2>
+          <p className="text-gray-400 mt-1">Orchestrate transaction flow and smart routing rules.</p>
+        </div>
+        <Button onClick={handleAddRule} className="bg-cyan-600 hover:bg-cyan-500">
+          <PlusCircle className="mr-2 h-4 w-4" /> Add Routing Rule
+        </Button>
+      </div>
 
-    const addCondition = () => {
-        if (currentRule) {
-            setCurrentRule({ ...currentRule, conditions: [...currentRule.conditions, { field: '', operator: '=', value: '' }] });
-        }
-    };
-
-    const addAction = () => {
-        if (currentRule) {
-            setCurrentRule({ ...currentRule, actions: [...currentRule.actions, { type: '', value: '' }] });
-        }
-    };
-
-    const removeCondition = (index: number) => {
-        if (currentRule) {
-            const updatedConditions = currentRule.conditions.filter((_, i) => i !== index);
-            setCurrentRule({ ...currentRule, conditions: updatedConditions });
-        }
-    };
-
-    const removeAction = (index: number) => {
-        if (currentRule) {
-            const updatedActions = currentRule.actions.filter((_, i) => i !== index);
-            setCurrentRule({ ...currentRule, actions: updatedActions });
-        }
-    };
-
-    const onDragEnd = (result: any) => {
-        if (!result.destination) {
-            return;
-        }
-        const reorderedRules = Array.from(rules);
-        const [movedRule] = reorderedRules.splice(result.source.index, 1);
-        reorderedRules.splice(result.destination.index, 0, movedRule);
-        setRules(reorderedRules);
-    };
-
-    const handleNewRuleChange = (field: string, value: string | number) => {
-        setNewRule({ ...newRule, [field]: value });
-    };
-
-    const handleNewRuleConditionChange = (index: number, field: string, value: string) => {
-        const updatedConditions = [...newRule.conditions];
-        updatedConditions[index] = { ...updatedConditions[index], [field]: value };
-        setNewRule({ ...newRule, conditions: updatedConditions });
-    };
-
-    const handleNewRuleActionChange = (index: number, field: string, value: string) => {
-        const updatedActions = [...newRule.actions];
-        updatedActions[index] = { ...updatedActions[index], [field]: value };
-        setNewRule({ ...newRule, actions: updatedActions });
-    };
-
-    const addNewConditionToNewRule = () => {
-        setNewRule({ ...newRule, conditions: [...newRule.conditions, { field: '', operator: '=', value: '' }] });
-    };
-
-    const addNewActionToNewRule = () => {
-        setNewRule({ ...newRule, actions: [...newRule.actions, { type: '', value: '' }] });
-    };
-
-    const removeNewRuleCondition = (index: number) => {
-        const updatedConditions = newRule.conditions.filter((_, i) => i !== index);
-        setNewRule({ ...newRule, conditions: updatedConditions });
-    };
-
-    const removeNewRuleAction = (index: number) => {
-        const updatedActions = newRule.actions.filter((_, i) => i !== index);
-        setNewRule({ ...newRule, actions: updatedActions });
-    };
-
-
-    return (
-        <Box sx={{ p: 3 }}>
-            <Typography variant="h4" gutterBottom>
-                Conductor Configuration
-            </Typography>
-            <Typography variant="body1" gutterBottom>
-                Define the rules, priorities, and routing logic for the AI Payment Orchestrator.
-            </Typography>
-
-            <Box sx={{ my: 3, p: 2, border: '1px solid #ccc', borderRadius: 1 }}>
-                <Typography variant="h6" gutterBottom>Add New Routing Rule</Typography>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid xs={12} sm={4}>
-                        <TextField
-                            label="Rule Name"
-                            value={newRule.name}
-                            onChange={(e) => handleNewRuleChange('name', e.target.value)}
-                            fullWidth
-                        />
-                    </Grid>
-                    <Grid xs={12} sm={2}>
-                        <TextField
-                            label="Priority"
-                            type="number"
-                            value={newRule.priority}
-                            onChange={(e) => handleNewRuleChange('priority', parseInt(e.target.value, 10))}
-                            fullWidth
-                        />
-                    </Grid>
-                    <Grid xs={12}>
-                        <TextField
-                            label="Description"
-                            value={newRule.description}
-                            onChange={(e) => handleNewRuleChange('description', e.target.value)}
-                            fullWidth
-                            multiline
-                            rows={2}
-                        />
-                    </Grid>
-                    {newRule.conditions.map((cond: any, index: number) => (
-                        <Grid container spacing={1} key={index} alignItems="center" sx={{ mt: 1 }}>
-                            <Grid xs={5}>
-                                <TextField
-                                    label="Condition Field"
-                                    value={cond.field}
-                                    onChange={(e) => handleNewRuleConditionChange(index, 'field', e.target.value)}
-                                    fullWidth
-                                />
-                            </Grid>
-                            <Grid xs={2}>
-                                <TextField
-                                    label="Operator"
-                                    value={cond.operator}
-                                    onChange={(e) => handleNewRuleConditionChange(index, 'operator', e.target.value)}
-                                    fullWidth
-                                />
-                            </Grid>
-                            <Grid xs={4}>
-                                <TextField
-                                    label="Value"
-                                    value={cond.value}
-                                    onChange={(e) => handleNewRuleConditionChange(index, 'value', e.target.value)}
-                                    fullWidth
-                                />
-                            </Grid>
-                            <Grid xs={1}>
-                                <IconButton onClick={() => removeNewRuleCondition(index)} color="error">
-                                    <DeleteIcon />
-                                </IconButton>
-                            </Grid>
-                        </Grid>
+      <Card className="border-gray-800 bg-gray-900/50">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-gray-800 hover:bg-transparent">
+              <TableHead className="w-12 text-center text-gray-500">#</TableHead>
+              <TableHead>Rule Name</TableHead>
+              <TableHead className="hidden md:table-cell">Logic Summary</TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rules.map((rule, idx) => (
+              <TableRow key={rule.id} className="border-gray-800 hover:bg-gray-800/30">
+                <TableCell className="text-gray-500 font-mono text-xs text-center">{idx + 1}</TableCell>
+                <TableCell>
+                  <div className="font-bold text-white">{rule.name}</div>
+                  <div className="text-xs text-gray-500 truncate max-w-xs">{rule.description}</div>
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  <div className="flex gap-2">
+                    {rule.conditions.map((c, i) => (
+                      <span key={i} className="px-2 py-0.5 bg-indigo-900/30 text-indigo-300 text-[10px] rounded border border-indigo-500/20">
+                        {c.field} {c.operator} {c.value}
+                      </span>
                     ))}
-                    <Grid xs={12}>
-                        <Button startIcon={<AddCircleOutlineIcon />} onClick={addNewConditionToNewRule} variant="outlined" size="small">Add Condition</Button>
-                    </Grid>
+                  </div>
+                </TableCell>
+                <TableCell>
+                   <div className="flex items-center gap-2 text-gray-400">
+                     <button 
+                        disabled={idx === 0} 
+                        onClick={() => handleMoveRule(idx, 'up')}
+                        className="p-1 hover:text-cyan-400 disabled:opacity-20 transition-colors"
+                     >
+                       <ArrowUp size={14} />
+                     </button>
+                     <button 
+                        disabled={idx === rules.length - 1} 
+                        onClick={() => handleMoveRule(idx, 'down')}
+                        className="p-1 hover:text-cyan-400 disabled:opacity-20 transition-colors"
+                     >
+                       <ArrowDown size={14} />
+                     </button>
+                   </div>
+                </TableCell>
+                <TableCell className="text-right space-x-2">
+                  <Button variant="ghost" size="sm" onClick={() => openEdit(rule)} className="text-gray-400 hover:text-white">
+                    <Edit2 size={14} />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleDeleteRule(rule.id)} className="text-red-400 hover:text-red-300">
+                    <Trash2 size={14} />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
 
-                    {newRule.actions.map((action: any, index: number) => (
-                        <Grid container spacing={1} key={index} alignItems="center" sx={{ mt: 1 }}>
-                            <Grid xs={5}>
-                                <TextField
-                                    label="Action Type"
-                                    value={action.type}
-                                    onChange={(e) => handleNewRuleActionChange(index, 'type', e.target.value)}
-                                    fullWidth
-                                />
-                            </Grid>
-                            <Grid xs={6}>
-                                <TextField
-                                    label="Action Value"
-                                    value={action.value}
-                                    onChange={(e) => handleNewRuleActionChange(index, 'value', e.target.value)}
-                                    fullWidth
-                                />
-                            </Grid>
-                            <Grid xs={1}>
-                                <IconButton onClick={() => removeNewRuleAction(index)} color="error">
-                                    <DeleteIcon />
-                                </IconButton>
-                            </Grid>
-                        </Grid>
-                    ))}
-                    <Grid xs={12}>
-                        <Button startIcon={<AddCircleOutlineIcon />} onClick={addNewActionToNewRule} variant="outlined" size="small">Add Action</Button>
-                    </Grid>
-                </Grid>
-                <Button variant="contained" onClick={handleAddRule} sx={{ mt: 2 }}>Add Rule</Button>
-            </Box>
-
-            <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-                Existing Routing Rules
-            </Typography>
-            <DragDropContext onDragEnd={onDragEnd}>
-                <Droppable droppableId="rules-list">
-                    {(provided) => (
-                        <Grid container spacing={2} ref={provided.innerRef} {...provided.droppableProps}>
-                            {rules.length === 0 && (
-                                <Grid xs={12}>
-                                    <Typography>No rules defined yet. Add a new rule to get started.</Typography>
-                                </Grid>
-                            )}
-                            {rules.map((rule, index) => (
-                                <Grid xs={12} sm={6} lg={4} key={rule.id}>
-                                    <Draggable draggableId={rule.id} index={index}>
-                                        {(provided) => (
-                                            <Card
-                                                ref={provided.innerRef}
-                                                {...provided.draggableProps}
-                                                {...provided.dragHandleProps}
-                                                sx={{ minHeight: 250, position: 'relative' }}
-                                            >
-                                                <CardContent>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                                        <Typography variant="h6" component="div">
-                                                            {rule.name}
-                                                        </Typography>
-                                                        <DragIndicatorIcon sx={{ opacity: 0.6, fontSize: 18 }} />
-                                                    </Box>
-                                                    <Typography sx={{ fontSize: 14, mb: 1 }} color="text.secondary">
-                                                        Priority: {rule.priority}
-                                                    </Typography>
-                                                    <Typography sx={{ mb: 1.5 }} color="text.secondary">
-                                                        {rule.description}
-                                                    </Typography>
-                                                    <Typography variant="subtitle2">Conditions:</Typography>
-                                                    <ul>
-                                                        {rule.conditions.map((cond: any, condIndex: number) => (
-                                                            <li key={condIndex}>
-                                                                {cond.field} {cond.operator} {cond.value}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                    <Typography variant="subtitle2">Actions:</Typography>
-                                                    <ul>
-                                                        {rule.actions.map((action: any, actionIndex: number) => (
-                                                            <li key={actionIndex}>
-                                                                {action.type}: {action.value}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </CardContent>
-                                                <Box sx={{ position: 'absolute', top: 10, right: 10 }}>
-                                                    <IconButton onClick={() => handleEditRule(rule)} color="primary" size="small">
-                                                        <EditIcon fontSize="small" />
-                                                    </IconButton>
-                                                    <IconButton onClick={() => handleDeleteRule(rule.id)} color="error" size="small">
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Box>
-                                            </Card>
-                                        )}
-                                    </Draggable>
-                                </Grid>
-                            ))}
-                            {provided.placeholder}
-                        </Grid>
-                    )}
-                </Droppable>
-            </DragDropContext>
-
-            <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
-                <DialogTitle>Edit Routing Rule</DialogTitle>
-                <DialogContent>
-                    {currentRule && (
-                        <Grid container spacing={2}>
-                            <Grid xs={12} sm={6}>
-                                <TextField
-                                    label="Rule Name"
-                                    value={currentRule.name}
-                                    onChange={(e) => setCurrentRule({ ...currentRule, name: e.target.value })}
-                                    fullWidth
-                                />
-                            </Grid>
-                            <Grid xs={12} sm={2}>
-                                <TextField
-                                    label="Priority"
-                                    type="number"
-                                    value={currentRule.priority}
-                                    onChange={(e) => setCurrentRule({ ...currentRule, priority: parseInt(e.target.value, 10) })}
-                                    fullWidth
-                                />
-                            </Grid>
-                            <Grid xs={12}>
-                                <TextField
-                                    label="Description"
-                                    value={currentRule.description}
-                                    onChange={(e) => setCurrentRule({ ...currentRule, description: e.target.value })}
-                                    fullWidth
-                                    multiline
-                                    rows={2}
-                                />
-                            </Grid>
-                            <Grid xs={12}>
-                                <Typography variant="h6">Conditions</Typography>
-                                {currentRule.conditions.map((cond: any, index: number) => (
-                                    <Grid container spacing={1} key={index} alignItems="center" sx={{ mt: 1 }}>
-                                        <Grid xs={5}>
-                                            <TextField
-                                                label="Field"
-                                                value={cond.field}
-                                                onChange={(e) => handleConditionChange(index, 'field', e.target.value)}
-                                                fullWidth
-                                            />
-                                        </Grid>
-                                        <Grid xs={2}>
-                                            <TextField
-                                                label="Operator"
-                                                value={cond.operator}
-                                                onChange={(e) => handleConditionChange(index, 'operator', e.target.value)}
-                                                fullWidth
-                                            />
-                                        </Grid>
-                                        <Grid xs={4}>
-                                            <TextField
-                                                label="Value"
-                                                value={cond.value}
-                                                onChange={(e) => handleConditionChange(index, 'value', e.target.value)}
-                                                fullWidth
-                                            />
-                                        </Grid>
-                                        <Grid xs={1}>
-                                            <IconButton onClick={() => removeCondition(index)} color="error">
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </Grid>
-                                    </Grid>
-                                ))}
-                                <Button startIcon={<AddCircleOutlineIcon />} onClick={addCondition} variant="outlined" size="small" sx={{ mt: 1 }}>Add Condition</Button>
-                            </Grid>
-
-                            <Grid xs={12}>
-                                <Typography variant="h6">Actions</Typography>
-                                {currentRule.actions.map((action: any, index: number) => (
-                                    <Grid container spacing={1} key={index} alignItems="center" sx={{ mt: 1 }}>
-                                        <Grid xs={5}>
-                                            <TextField
-                                                label="Action Type"
-                                                value={action.type}
-                                                onChange={(e) => handleActionChange(index, 'type', e.target.value)}
-                                                fullWidth
-                                            />
-                                        </Grid>
-                                        <Grid xs={6}>
-                                            <TextField
-                                                label="Action Value"
-                                                value={action.value}
-                                                onChange={(e) => handleActionChange(index, 'value', e.target.value)}
-                                                fullWidth
-                                            />
-                                        </Grid>
-                                        <Grid xs={1}>
-                                            <IconButton onClick={() => removeAction(index)} color="error">
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </Grid>
-                                    </Grid>
-                                ))}
-                                <Button startIcon={<AddCircleOutlineIcon />} onClick={addAction} variant="outlined" size="small" sx={{ mt: 1 }}>Add Action</Button>
-                            </Grid>
-                        </Grid>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleSaveEdit} variant="contained">Save</Button>
-                </DialogActions>
-            </Dialog>
-        </Box>
-    );
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Configure Routing Logic</DialogTitle>
+          </DialogHeader>
+          {currentRule && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">Rule Designation</label>
+                <Input 
+                  value={currentRule.name} 
+                  onChange={e => setCurrentRule({...currentRule, name: e.target.value})}
+                  className="bg-gray-800 border-gray-700 text-white" 
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase">Intent Description</label>
+                <textarea 
+                  value={currentRule.description} 
+                  onChange={e => setCurrentRule({...currentRule, description: e.target.value})}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-md p-3 text-sm text-white focus:border-cyan-500 outline-none h-20"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={saveEdit} className="bg-cyan-600 hover:bg-cyan-500">Save Configuration</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 };
 
 export default ConductorConfigurationView;

@@ -149,6 +149,7 @@ export enum View {
     TransactionFilter = 'transaction-filter',
     TransactionList = 'transaction-list',
     TreasuryTransactionList = 'treasury-transaction-list',
+    TreasuryView = 'treasury-view', // Added to fix sApp.tsx error
     UniversalObjectInspector = 'universal-object-inspector',
     VirtualAccountForm = 'virtual-account-form',
     VirtualAccountsTable = 'virtual-accounts-table',

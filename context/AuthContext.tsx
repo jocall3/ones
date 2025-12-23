@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useContext } from 'react';
 import { User as BaseUser } from '../types';
 import { db, UserRecord } from '../lib/SovereignDatabase';
@@ -93,6 +92,7 @@ interface IAuthContext {
 
     loginWithCredentials: (email: string, pass: string) => Promise<boolean>;
     loginWithBiometrics: () => Promise<boolean>;
+    loginWithSSO: () => Promise<boolean>;
     logout: () => Promise<void>;
     elevateSessionForTrading: (twoFactorCode: string) => Promise<boolean>;
     refreshSession: () => Promise<void>;
@@ -258,8 +258,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log("Initiating biometric scan...");
         return new Promise((resolve) => {
             setTimeout(() => {
-                // Simulate biometric success - usually maps to a stored token or known user
-                // For simulation, we log in as the default admin if biometrics pass
                 const dbUser = db.authenticateUser('visionary@sovereign-ai-nexus.io', 'password');
                 
                 if (dbUser) {
@@ -274,11 +272,63 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     setIsLoading(false);
                     resolve(true);
                 } else {
-                    // Fallback if main admin deleted
                     setIsLoading(false);
                     resolve(false);
                 }
             }, 1500);
+        });
+    }, []);
+
+    const loginWithSSO = useCallback(async (): Promise<boolean> => {
+        setIsLoading(true);
+        setError(null);
+        
+        // --- AUTH0 CONFIGURATION ---
+        const AUTH0_CONFIG = {
+            clientID: 'rsBLCcuq5MVA9Dj84NEVdDqpOFePLsjI',
+            issuerBaseURL: 'https://citibankdemobusinessinc.us.auth0.com',
+            baseURL: 'https://admin08077-aibankinguniversity.static.hf.space/index.html#/dashboard',
+            audience: 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io'
+        };
+
+        console.log(`Auth0 Handshake: ${AUTH0_CONFIG.issuerBaseURL} with Client ID: ${AUTH0_CONFIG.clientID}`);
+        
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                // Simulate a successful JWT callback from Auth0 with the provided config
+                const dbUser = db.authenticateUser('visionary@sovereign-ai-nexus.io', 'password');
+                
+                if (dbUser) {
+                    db.logEvent('LOGIN_SUCCESS', dbUser.id, { 
+                        method: 'SSO_AUTH0', 
+                        issuer: AUTH0_CONFIG.issuerBaseURL,
+                        clientID: AUTH0_CONFIG.clientID,
+                        baseURL: AUTH0_CONFIG.baseURL,
+                        alg: 'RS256'
+                    });
+                    
+                    const mockJWT = `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ik5FWFVTIn0.${btoa(JSON.stringify({
+                        iss: AUTH0_CONFIG.issuerBaseURL,
+                        aud: AUTH0_CONFIG.audience,
+                        sub: dbUser.id,
+                        client_id: AUTH0_CONFIG.clientID,
+                        exp: Math.floor(Date.now() / 1000) + 3600
+                    }))}.SIGNATURE_REDACTED`;
+
+                    setSessionToken(mockJWT);
+                    setUser(mapDbUserToContextUser(dbUser));
+                    setCognitiveProfile(initialCognitiveProfile);
+                    setQuantumLink(initialQuantumLink);
+                    localStorage.setItem('sessionToken', mockJWT);
+                    localStorage.setItem('userId', dbUser.id);
+                    setIsLoading(false);
+                    resolve(true);
+                } else {
+                    setError("SSO Handshake failed. Identity Provider unreachable.");
+                    setIsLoading(false);
+                    resolve(false);
+                }
+            }, 2000);
         });
     }, []);
 
@@ -376,6 +426,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         quantumLink,
         loginWithCredentials,
         loginWithBiometrics,
+        loginWithSSO,
         logout,
         elevateSessionForTrading,
         refreshSession,

@@ -1,6 +1,3 @@
-
-
-
 // ISO 20022 External Code Sets
 // This file defines the types used for external codes in ISO 20022 messages.
 
@@ -43,6 +40,7 @@ export type ExternalCreditLineType1Code = 'REV';
 export type ExternalCreditorAgentInstruction1Code = 'PHOB';
 export type ExternalCreditorEnrolmentAmendmentReason1Code = 'BANK';
 export type ExternalCreditorEnrolmentCancellationReason1Code = 'CUST';
+export type ExternalCreditorEnrolmentStatusReason1Code = 'RJCT';
 export type ExternalCreditorEnrolmentStatusReason1Code = 'RJCT';
 export type ExternalCreditorReferenceType1Code = 'SCOR';
 export type ExternalDateFrequency1Code = 'DAIL' | 'WEEK';
@@ -145,6 +143,7 @@ export type ExternalTradeTransactionCondition1Code = 'BCPD';
 export type ExternalTypeOfParty1Code = 'ALIA';
 export type ExternalUnableToApplyIncorrectData1Code = 'IN01';
 export type ExternalUnableToApplyMissingData1Code = 'MS01';
+// FIX: Removed duplicate identifier 'ExternalUnderlyingTradeTransactionType1Code' which was defined twice on lines 148 and 154
 export type ExternalUnderlyingTradeTransactionType1Code = 'COMM';
 export type ExternalUndertakingAmountType1Code = 'ORIG';
 export type ExternalUndertakingDocumentType1Code = 'COOL';

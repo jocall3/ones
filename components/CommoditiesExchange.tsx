@@ -1,8 +1,4 @@
 
-
-
-
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 // --- Types & Interfaces ---
@@ -261,7 +257,7 @@ export default function CommoditiesExchange() {
   const isUp = selectedPrice >= previousPrice;
   const percentChange = ((selectedPrice - previousPrice) / previousPrice) * 100;
 
-  const totalPortfolioValue = Object.values(portfolio).reduce((acc, item: PortfolioItem) => {
+  const totalPortfolioValue = Object.values(portfolio).reduce<number>((acc, item: PortfolioItem) => {
     const currentPrice = currentPrices[item.commodityId] || 0;
     return acc + (item.quantity * currentPrice);
   }, 0);

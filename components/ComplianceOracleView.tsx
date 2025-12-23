@@ -244,21 +244,21 @@ export const ComplianceOracleView = () => {
         <Container maxWidth={false} sx={{ py: 3, flexGrow: 1, overflowY: 'auto' }}>
           <Grid container spacing={3}>
             {/* KPIs */}
-            <Grid xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3}>
               <KpiCard title="Total Messages (24h)" value={totalMessages.toLocaleString()} icon={<AllInboxIcon color="primary"/>} />
             </Grid>
-            <Grid xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3}>
               <KpiCard title="High-Risk Alerts (24h)" value={highRiskAlertsToday.toLocaleString()} icon={<GppBadIcon color="error"/>} />
             </Grid>
-            <Grid xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3}>
               <KpiCard title="Avg. Resolution Time" value="45 min" icon={<HourglassTopIcon color="info"/>} />
             </Grid>
-            <Grid xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={3}>
               <KpiCard title="Sanction Hit Rate" value="0.02%" icon={<SyncProblemIcon color="warning"/>} />
             </Grid>
 
             {/* Message Flow Chart */}
-            <Grid xs={12} lg={8}>
+            <Grid item xs={12} lg={8}>
               <Paper sx={{ p: 2, height: '400px' }}>
                  <Typography variant="h6" gutterBottom>Real-Time Message Flow</Typography>
                 <ResponsiveContainer width="100%" height="90%">
@@ -270,4 +270,91 @@ export const ComplianceOracleView = () => {
                     <Legend />
                     <Line type="monotone" dataKey="pacs008" name="pacs.008 (Payments)" stroke="#82ca9d" strokeWidth={2} dot={false} />
                     <Line type="monotone" dataKey="pacs009" name="pacs.009 (FI Credit)" stroke="#8884d8" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="camt053" name="camt.053 (Statements)" stroke="#ff
+                    <Line type="monotone" dataKey="camt053" name="camt.053 (Statements)" stroke="#ffb74d" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Paper>
+            </Grid>
+            {/* System Performance */}
+            <Grid item xs={12} lg={4}>
+                 <Card sx={{ height: '400px' }}>
+                    <CardContent>
+                        <Typography variant="h6" gutterBottom>System Diagnostics</Typography>
+                        <Box sx={{ mt: 4, textAlign: 'center' }}>
+                            <SpeedIcon sx={{ fontSize: '5rem', color: 'primary.main', mb: 2 }} />
+                            <Typography variant="h4">99.8%</Typography>
+                            <Typography color="text.secondary">AI Core Accuracy</Typography>
+                            <Box sx={{ mt: 4 }}>
+                                <Typography variant="body2" gutterBottom>CPU Load: 42%</Typography>
+                                <Typography variant="body2" gutterBottom>Memory: 18.4GB / 64GB</Typography>
+                                <Typography variant="body2">Thread Latency: 12ms</Typography>
+                            </Box>
+                        </Box>
+                    </CardContent>
+                </Card>
+            </Grid>
+
+            {/* Alerts Table */}
+            <Grid item xs={12}>
+              <TableContainer component={Paper}>
+                <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="h6">Real-Time Risk & Compliance Alerts</Typography>
+                    <Chip label="LIVE MONITORING" color="error" variant="outlined" sx={{ fontWeight: 'bold' }} />
+                </Box>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Alert ID</TableCell>
+                      <TableCell>Timestamp</TableCell>
+                      <TableCell>Reason</TableCell>
+                      <TableCell align="center">Risk Score</TableCell>
+                      <TableCell>Amount</TableCell>
+                      <TableCell align="center">Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {riskAlerts.map((alert) => (
+                      <TableRow key={alert.id} hover>
+                        <TableCell sx={{ fontWeight: 'bold', color: 'primary.main' }}>{alert.id}</TableCell>
+                        <TableCell>{new Date(alert.timestamp).toLocaleTimeString()}</TableCell>
+                        <TableCell>{alert.reason}</TableCell>
+                        <TableCell align="center">
+                          <Box
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: '50%',
+                              backgroundColor: getRiskScoreColor(alert.riskScore),
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#000',
+                              fontWeight: 'bold',
+                              margin: 'auto'
+                            }}
+                          >
+                            {alert.riskScore}
+                          </Box>
+                        </TableCell>
+                        <TableCell>{alert.amount}</TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={alert.status}
+                            size="small"
+                            color={getRiskChipColor(alert.status)}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+    </ThemeProvider>
+  );
+};
+
+export default ComplianceOracleView;

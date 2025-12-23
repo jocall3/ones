@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
-import 'react-circular-progressbar/dist/styles.css';
+// Styles loaded via index.html
+// import 'react-circular-progressbar/dist/styles.css';
 
 interface DisruptionIndexMeterProps {
   indexValue: number; // Numerical value of the disruption index (0-100)

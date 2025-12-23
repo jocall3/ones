@@ -1,14 +1,25 @@
 
 import React, { useState } from 'react';
-import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps';
+import { MapContainer, TileLayer, Marker, Circle, Popup } from 'react-leaflet';
+import L from 'leaflet';
 import Card from './Card';
-import { Tooltip } from 'recharts'; // Reuse recharts tooltip style if needed or custom
+// CSS is loaded via index.html to prevent ESM loader errors
+// import 'leaflet/dist/leaflet.css'; 
 
-const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+// Fix for default marker icon in leaflet
+const icon = L.icon({
+    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
 
 interface LocationData {
     name: string;
-    coordinates: [number, number];
+    coordinates: [number, number]; // [Longitude, Latitude] in original data, but Leaflet wants [Lat, Lng]
     liquidity: number; // USD equivalent
     currencies: string[];
 }
@@ -23,7 +34,6 @@ const LOCATIONS: LocationData[] = [
 ];
 
 const GlobalPositionMap: React.FC = () => {
-    const [tooltipContent, setTooltipContent] = useState("");
     const [selectedMarker, setSelectedMarker] = useState<LocationData | null>(null);
 
     return (
@@ -31,13 +41,13 @@ const GlobalPositionMap: React.FC = () => {
             <h2 className="text-3xl font-bold text-white tracking-wider">Global Liquidity Map</h2>
             
             <Card className="p-0 bg-gray-900 border-gray-700 overflow-hidden relative h-[600px]">
-                <div className="absolute top-4 left-4 z-10 bg-black/60 backdrop-blur p-3 rounded-lg border border-gray-700">
+                <div className="absolute top-4 left-4 z-[400] bg-black/60 backdrop-blur p-3 rounded-lg border border-gray-700">
                     <p className="text-xs text-gray-400 uppercase font-bold">Total Global Liquidity</p>
                     <p className="text-2xl font-extrabold text-white">$45.7M</p>
                 </div>
 
                 {selectedMarker && (
-                    <div className="absolute bottom-4 left-4 z-10 bg-gray-800/90 backdrop-blur p-4 rounded-xl border border-cyan-500/50 w-64 animate-fadeIn">
+                    <div className="absolute bottom-4 left-4 z-[400] bg-gray-800/90 backdrop-blur p-4 rounded-xl border border-cyan-500/50 w-64 animate-fadeIn">
                         <h3 className="font-bold text-white text-lg mb-1">{selectedMarker.name}</h3>
                         <p className="text-2xl font-mono text-cyan-400 mb-3">${selectedMarker.liquidity.toLocaleString()}</p>
                         <div className="space-y-1">
@@ -52,41 +62,48 @@ const GlobalPositionMap: React.FC = () => {
                             <button className="text-xs text-cyan-400 hover:text-white transition">View Accounts</button>
                             <button className="text-xs text-cyan-400 hover:text-white transition">Initiate Transfer</button>
                         </div>
+                        <button 
+                            className="absolute top-2 right-2 text-gray-400 hover:text-white"
+                            onClick={() => setSelectedMarker(null)}
+                        >
+                            ✕
+                        </button>
                     </div>
                 )}
 
-                <ComposableMap projection="geoMercator" projectionConfig={{ scale: 140 }}>
-                    <Geographies geography={geoUrl}>
-                        {({ geographies }) =>
-                        geographies.map((geo) => (
-                            <Geography
-                            key={geo.rsmKey}
-                            geography={geo}
-                            fill="#1f2937"
-                            stroke="#374151"
-                            strokeWidth={0.5}
-                            style={{
-                                default: { outline: "none" },
-                                hover: { fill: "#374151", outline: "none" },
-                                pressed: { fill: "#4b5563", outline: "none" },
-                            }}
+                <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%', background: '#1f2937' }} scrollWheelZoom={true}>
+                    <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    />
+                    {LOCATIONS.map((loc) => (
+                        <React.Fragment key={loc.name}>
+                             {/* Circle for liquidity visualization */}
+                            <Circle
+                                center={[loc.coordinates[1], loc.coordinates[0]]}
+                                pathOptions={{ 
+                                    fillColor: selectedMarker?.name === loc.name ? "#06b6d4" : "rgba(6, 182, 212, 0.5)", 
+                                    color: '#fff', 
+                                    weight: 1, 
+                                    fillOpacity: 0.5 
+                                }}
+                                radius={Math.log(loc.liquidity) * 40000}
+                                eventHandlers={{
+                                    click: () => setSelectedMarker(loc),
+                                }}
                             />
-                        ))
-                        }
-                    </Geographies>
-                    {LOCATIONS.map((loc) => {
-                        // Scale marker size based on liquidity (logarithmic scale for visualization)
-                        const size = Math.log(loc.liquidity) * 0.8;
-                        const isSelected = selectedMarker?.name === loc.name;
-
-                        return (
-                            <Marker key={loc.name} coordinates={loc.coordinates} onClick={() => setSelectedMarker(loc)}>
-                                <circle r={size} fill={isSelected ? "#06b6d4" : "rgba(6, 182, 212, 0.5)"} stroke="#fff" strokeWidth={1} className="cursor-pointer hover:fill-cyan-400 transition-colors" />
-                                <circle r={size + 5} fill="transparent" stroke={isSelected ? "#06b6d4" : "transparent"} strokeWidth={1} className={isSelected ? "animate-ping" : ""} />
+                            {/* Marker for precise location */}
+                            <Marker 
+                                position={[loc.coordinates[1], loc.coordinates[0]]} 
+                                icon={icon}
+                                eventHandlers={{
+                                    click: () => setSelectedMarker(loc),
+                                }}
+                            >
                             </Marker>
-                        );
-                    })}
-                </ComposableMap>
+                        </React.Fragment>
+                    ))}
+                </MapContainer>
             </Card>
         </div>
     );
