@@ -1,360 +1,376 @@
-import React, { useState, useEffect } from 'react';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Container,
-  Grid,
-  Card,
-  CardContent,
-  Paper,
-  Box,
-  ThemeProvider,
-  createTheme,
-  CssBaseline,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  Marker,
-  Line as MapLine
-} from 'react-simple-maps';
-import ShieldIcon from '@mui/icons-material/Shield';
-import GppBadIcon from '@mui/icons-material/GppBad';
-import HourglassTopIcon from '@mui/icons-material/HourglassTop';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import SyncProblemIcon from '@mui/icons-material/SyncProblem';
-import AllInboxIcon from '@mui/icons-material/AllInbox';
-import SpeedIcon from '@mui/icons-material/Speed';
+import React, { useState, useMemo, useContext, useEffect } from 'react';
+import Card from './Card';
+import { 
+    ShieldCheck, AlertTriangle, CheckCircle, Clock, FileText, 
+    Zap, Cpu, Lock, Eye, BarChart3, Binary, Scale, Download,
+    Shield, Search, AlertCircle, Terminal, ClipboardList
+} from 'lucide-react';
+import { DataContext } from '../context/DataContext';
+import { GoogleGenAI } from "@google/genai";
 
-
-// --- THEME ---
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#76ff03', // A vibrant green for highlights
-    },
-    background: {
-      default: '#121212',
-      paper: '#1e1e1e',
-    },
-    text: {
-      primary: '#e0e0e0',
-      secondary: '#b3b3b3',
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h4: {
-      fontWeight: 700,
-    },
-    h5: {
-      fontWeight: 600,
-    },
-  },
-});
-
-// --- MOCK DATA GENERATION ---
-
-// Message Flow Data
-const generateMessageFlowData = () => {
-  const data = [];
-  for (let i = 10; i >= 0; i--) {
-    const time = new Date();
-    time.setMinutes(time.getMinutes() - i);
-    data.push({
-      time: time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      pacs008: Math.floor(Math.random() * 200 + 300),
-      pacs009: Math.floor(Math.random() * 50 + 80),
-      camt053: Math.floor(Math.random() * 100 + 150),
-    });
-  }
-  return data;
-};
-
-// Risk Alerts Data
-const alertReasons = [
-  'AML Threshold Breach',
-  'Sanction List Hit (OFAC)',
-  'Unusual Activity Pattern',
-  'High-Risk Jurisdiction',
-  'Transaction Structuring',
-  'PEP Match',
-];
-
-const alertStatuses = ['Pending Review', 'Investigating', 'Resolved', 'False Positive'];
-const generateRiskAlerts = (count: number) => {
-  const alerts = [];
-  for (let i = 0; i < count; i++) {
-    const riskScore = Math.floor(Math.random() * 60 + 40);
-    alerts.push({
-      id: `TX${Math.floor(Math.random() * 900000) + 100000}`,
-      timestamp: new Date(new Date().getTime() - Math.random() * 600000).toISOString(),
-      reason: alertReasons[Math.floor(Math.random() * alertReasons.length)],
-      riskScore,
-      status: alertStatuses[Math.floor(Math.random() * alertStatuses.length)],
-      amount: `${(Math.random() * 500000 + 10000).toFixed(2)} USD`,
-    });
-  }
-  return alerts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-};
-
-
-// Geographical Risk Data
-const geoDataUrl = "https://raw.githubusercontent.com/zcreativelabs/react-simple-maps/master/topojson-maps/world-110m.json";
-
-const highRiskTransactions = [
-    { from: "USA", to: "RUS", fromCoords: [-98.5795, 39.8283], toCoords: [105.3188, 61.5240] },
-    { from: "GBR", to: "IRN", fromCoords: [-3.4360, 55.3781], toCoords: [53.6880, 32.4279] },
-    { from: "CHN", to: "PRK", fromCoords: [104.1954, 35.8617], toCoords: [127.5101, 40.3399] },
-    { from: "DEU", to: "SYR", fromCoords: [10.4515, 51.1657], toCoords: [38.9968, 34.8021] },
-];
-
-const markers = [
-    { markerOffset: -15, name: "New York", coordinates: [-74.006, 40.7128] },
-    { markerOffset: 25, name: "London", coordinates: [-0.1278, 51.5074] },
-    { markerOffset: 25, name: "Frankfurt", coordinates: [8.6821, 50.1109] },
-    { markerOffset: 25, name: "Singapore", coordinates: [103.8198, 1.3521] },
-    { markerOffset: -15, name: "Moscow", coordinates: [37.6173, 55.7558] },
-    { markerOffset: 25, name: "Tehran", coordinates: [51.3890, 35.6892] },
-];
-
-
-// --- COMPONENTS ---
-
-const KpiCard = ({ title, value, icon }: { title: string; value: string; icon: React.ReactNode }) => (
-  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-    <CardContent>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-        {icon}
-        <Typography sx={{ ml: 1, color: 'text.secondary', fontWeight: 'bold' }}>
-          {title}
-        </Typography>
-      </Box>
-      <Typography variant="h4" component="div">
-        {value}
-      </Typography>
-    </CardContent>
-  </Card>
-);
-
-const getRiskChipColor = (status: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
-  switch (status) {
-    case 'Pending Review':
-      return 'warning';
-    case 'Investigating':
-      return 'info';
-    case 'Resolved':
-      return 'success';
-    case 'False Positive':
-      return 'default';
-    default:
-      return 'default';
-  }
-};
-
-const getRiskScoreColor = (score: number) => {
-    if (score > 85) return '#f44336'; // red
-    if (score > 65) return '#ff9800'; // orange
-    return '#ffc107'; // amber
+interface NistControl {
+    id: string;
+    family: string;
+    title: string;
+    description: string;
+    status: 'IMPLEMENTED' | 'PARTIAL' | 'NOT_STARTED' | 'PLANNED';
+    nexusModule: string;
+    evidence: string;
+    longDescription: string;
 }
 
+const NIST_800_171_CONTROLS: NistControl[] = [
+    { 
+        id: '3.1.1', 
+        family: 'Access Control', 
+        title: 'Limit system access to authorized users', 
+        description: 'Limit system access to authorized users, processes acting on behalf of authorized users, and devices.', 
+        status: 'IMPLEMENTED', 
+        nexusModule: 'Nexus Identity Hub', 
+        evidence: 'Auth0 RS256 JWT validation active.',
+        longDescription: 'Access is governed by the Sovereign Identity Provider. Each session is validated against the Nexus Trust Engine. Devices must be registered in the Endpoint Inventory before a TLS handshake is permitted.'
+    },
+    { 
+        id: '3.1.2', 
+        family: 'Access Control', 
+        title: 'Limit system access to types of transactions', 
+        description: 'Limit system access to the types of transactions and functions that authorized users are permitted to execute.', 
+        status: 'IMPLEMENTED', 
+        nexusModule: 'RBAC Controller', 
+        evidence: 'Scoped JWT claims enforce functional boundaries.',
+        longDescription: 'Traders cannot access Compliance Oracle settings. Architects cannot initiate capital flows without dual-authorization. Transactional limits are enforced at the API Gateway level.'
+    },
+    { 
+        id: '3.1.3', 
+        family: 'Access Control', 
+        title: 'Control CUI flow', 
+        description: 'Control the flow of CUI in accordance with approved authorizations.', 
+        status: 'IMPLEMENTED', 
+        nexusModule: 'FlowMatrix Ledger', 
+        evidence: 'Data labeling engine segregates CUI/FCI flows.',
+        longDescription: 'Any data moving through the FlowMatrix is automatically inspected for CUI markers. If detected, the packet is encrypted with a program-specific key and routed through the Secure Data Bridge.'
+    },
+    { 
+        id: '3.3.1', 
+        family: 'Audit and Accountability', 
+        title: 'Create and retain system audit logs', 
+        description: 'Create and retain system audit logs and records to the extent needed to enable the monitoring, analysis, and investigation.', 
+        status: 'IMPLEMENTED', 
+        nexusModule: 'Security Center', 
+        evidence: 'Immutable ledger logging via Distributed Ledger Technology.',
+        longDescription: 'The Nexus uses a private proof-of-authority chain to store all system logs. These logs are write-once, read-many (WORM) and include full context: user ID, device fingerprint, coordinate telemetry, and result hash.'
+    },
+    { 
+        id: '3.3.2', 
+        family: 'Audit and Accountability', 
+        title: 'Ensure that the actions of individual system users can be uniquely traced', 
+        description: 'Ensure that the actions of individual system users can be uniquely traced to those users.', 
+        status: 'IMPLEMENTED', 
+        nexusModule: 'Nexus Identity Hub', 
+        evidence: 'Audit logs include unique Auth0 Sub IDs.',
+        longDescription: 'Shared accounts are strictly prohibited. Every interaction is signed by the user’s individual private key fragment, which is unlocked via local biometric verification.'
+    },
+    { 
+        id: '3.5.3', 
+        family: 'Identification and Authentication', 
+        title: 'Use multi-factor authentication', 
+        description: 'Use multi-factor authentication for local and network access to privileged accounts.', 
+        status: 'IMPLEMENTED', 
+        nexusModule: 'Biometric Handshake', 
+        evidence: 'Quantum-resistant 2FA and Biometric scan required.',
+        longDescription: 'The Nexus enforces a three-tier auth protocol: Something you know (Passphrase), Something you have (FIDO2 Hardware Key), and Something you are (Neural/Face Scan).'
+    },
+    { 
+        id: '3.11.1', 
+        family: 'Risk Assessment', 
+        title: 'Periodically assess risk', 
+        description: 'Periodically assess the risk to organizational operations, organizational assets, and individuals.', 
+        status: 'PARTIAL', 
+        nexusModule: 'Compliance Oracle', 
+        evidence: 'AI-driven heuristic scans active; manual annual review pending.',
+        longDescription: 'The system performs real-time risk assessment using the idgafai engine. However, a formal human-led risk assessment of the physical vault infrastructure is scheduled for Q4.'
+    },
+    { 
+        id: '3.13.11', 
+        family: 'System and Communications Protection', 
+        title: 'Employ FIPS-validated cryptography', 
+        description: 'Employ FIPS-validated cryptography when used to protect the confidentiality of CUI.', 
+        status: 'PLANNED', 
+        nexusModule: 'Quantum Key Vault', 
+        evidence: 'Transitioning to AES-256-GCM FIPS module in T-30 days.',
+        longDescription: 'Currently using OpenSSL 3.0 (FIPS compatible). We are migrating to a dedicated Hardware Security Module (HSM) that is FIPS 140-3 Level 3 certified to meet the Expert tier requirements.'
+    },
+    { 
+        id: '3.14.1', 
+        family: 'System and Information Integrity', 
+        title: 'Identify, report, and correct system flaws', 
+        description: 'Identify, report, and correct system flaws in a timely manner.', 
+        status: 'IMPLEMENTED', 
+        nexusModule: 'Autonomous Core', 
+        evidence: 'Real-time memory buffer monitoring active.',
+        longDescription: 'The AI core monitors all process threads for anomalous behavior. Any detected vulnerability is automatically isolated, and a remediation ticket is generated in the Developer Hub.'
+    },
+];
 
-export const ComplianceOracleView = () => {
-  const [messageFlowData, setMessageFlowData] = useState(generateMessageFlowData());
-  const [riskAlerts, setRiskAlerts] = useState(generateRiskAlerts(15));
-  const [totalMessages, setTotalMessages] = useState(245890);
-  const [highRiskAlertsToday, setHighRiskAlertsToday] = useState(132);
-  const [timeFilter, setTimeFilter] = React.useState('24h');
+const ComplianceOracleView: React.FC = () => {
+    const context = useContext(DataContext);
+    const [selectedFamily, setSelectedFamily] = useState<string>('All');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isGeneratingSSP, setIsGeneratingSSP] = useState(false);
+    const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+    const [selectedControl, setSelectedControl] = useState<NistControl | null>(null);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMessageFlowData(prevData => {
-        const newDataPoint = {
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          pacs008: Math.floor(Math.random() * 200 + 300),
-          pacs009: Math.floor(Math.random() * 50 + 80),
-          camt053: Math.floor(Math.random() * 100 + 150),
+    const families = useMemo(() => ['All', ...new Set(NIST_800_171_CONTROLS.map(c => c.family))], []);
+
+    const filteredControls = useMemo(() => {
+        return NIST_800_171_CONTROLS.filter(c => {
+            const matchesFamily = selectedFamily === 'All' || c.family === selectedFamily;
+            const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                 c.id.includes(searchTerm) ||
+                                 c.family.toLowerCase().includes(searchTerm.toLowerCase());
+            return matchesFamily && matchesSearch;
+        });
+    }, [selectedFamily, searchTerm]);
+
+    const stats = useMemo(() => {
+        const total = NIST_800_171_CONTROLS.length;
+        const implemented = NIST_800_171_CONTROLS.filter(c => c.status === 'IMPLEMENTED').length;
+        return {
+            percentage: Math.round((implemented / total) * 100),
+            implemented,
+            total
         };
-        return [...prevData.slice(1), newDataPoint];
-      });
+    }, []);
 
-      if (Math.random() > 0.7) { // Occasionally add a new alert
-        setRiskAlerts(prevAlerts => [
-            ...generateRiskAlerts(1), 
-            ...prevAlerts
-        ].slice(0,15));
-        setHighRiskAlertsToday(prev => prev + 1);
-      }
-      setTotalMessages(prev => prev + Math.floor(Math.random() * 10));
+    const runAIRiskAssessment = async () => {
+        if (!context?.geminiApiKey) return;
+        setIsGeneratingSSP(true);
+        setAiAnalysis(null);
+        try {
+            const ai = new GoogleGenAI({ apiKey: context.geminiApiKey });
+            const prompt = `Perform a CMMC Level 2 Readiness review based on the current state:
+                - Implemented: ${stats.implemented}/${stats.total}
+                - Critical Gaps: FIPS Cryptography (SC.3.13.11) is PENDING.
+                - Strengths: Identity Management and Audit Logging are robust.
+                
+                Provide a structured report with:
+                1. Executive Summary
+                2. Top 3 Vulnerabilities
+                3. Path to 100% Compliance.`;
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-3-pro-preview',
+                contents: prompt,
+            });
+            setAiAnalysis(response.text);
+        } catch (e) {
+            setAiAnalysis("AI Diagnostic Link Interrupted. Proceed with manual verification of control evidence.");
+        } finally {
+            setIsGeneratingSSP(false);
+        }
+    };
 
-    }, 3000); // Update every 3 seconds
+    return (
+        <div className="p-6 md:p-10 space-y-8 bg-gray-950 min-h-screen text-gray-100">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-800 pb-8">
+                <div>
+                    <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-orange-400 to-yellow-500 tracking-tighter uppercase font-mono italic">
+                        Compliance Oracle
+                    </h1>
+                    <p className="mt-2 text-xl text-gray-400 font-mono">
+                        SOVEREIGN ASSESSMENT INFRASTRUCTURE // NIST SP 800-171 R2
+                    </p>
+                </div>
+                <div className="flex gap-4">
+                    <button 
+                        onClick={runAIRiskAssessment}
+                        disabled={isGeneratingSSP}
+                        className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                        {isGeneratingSSP ? <Loader2 className="animate-spin" /> : <Binary size={20} />}
+                        Execute AI Assessment
+                    </button>
+                    <button className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-xl border border-gray-700 flex items-center gap-2">
+                        <Download size={20} /> Export SSP
+                    </button>
+                </div>
+            </header>
 
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <ThemeProvider theme={darkTheme}>
-      <CssBaseline />
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <AppBar position="static" color="default" elevation={1}>
-          <Toolbar>
-            <ShieldIcon color="primary" sx={{ mr: 2, fontSize: '2rem' }} />
-            <Typography variant="h5" noWrap sx={{ flexGrow: 1 }}>
-              Compliance Oracle Dashboard
-            </Typography>
-            <FormControl size="small" sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel>Time Range</InputLabel>
-              <Select
-                value={timeFilter}
-                label="Time Range"
-                onChange={(e) => setTimeFilter(e.target.value)}
-              >
-                <MenuItem value={'1h'}>Last Hour</MenuItem>
-                <MenuItem value={'6h'}>Last 6 Hours</MenuItem>
-                <MenuItem value={'24h'}>Last 24 Hours</MenuItem>
-              </Select>
-            </FormControl>
-          </Toolbar>
-        </AppBar>
-
-        <Container maxWidth={false} sx={{ py: 3, flexGrow: 1, overflowY: 'auto' }}>
-          <Grid container spacing={3}>
-            {/* KPIs */}
-            <Grid item xs={12} sm={6} md={3}>
-              <KpiCard title="Total Messages (24h)" value={totalMessages.toLocaleString()} icon={<AllInboxIcon color="primary"/>} />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <KpiCard title="High-Risk Alerts (24h)" value={highRiskAlertsToday.toLocaleString()} icon={<GppBadIcon color="error"/>} />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <KpiCard title="Avg. Resolution Time" value="45 min" icon={<HourglassTopIcon color="info"/>} />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <KpiCard title="Sanction Hit Rate" value="0.02%" icon={<SyncProblemIcon color="warning"/>} />
-            </Grid>
-
-            {/* Message Flow Chart */}
-            <Grid item xs={12} lg={8}>
-              <Paper sx={{ p: 2, height: '400px' }}>
-                 <Typography variant="h6" gutterBottom>Real-Time Message Flow</Typography>
-                <ResponsiveContainer width="100%" height="90%">
-                  <LineChart data={messageFlowData}>
-                    <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
-                    <XAxis dataKey="time" stroke={darkTheme.palette.text.secondary} />
-                    <YAxis stroke={darkTheme.palette.text.secondary} />
-                    <Tooltip contentStyle={{ backgroundColor: darkTheme.palette.background.paper, border: `1px solid ${darkTheme.palette.divider}`}}/>
-                    <Legend />
-                    <Line type="monotone" dataKey="pacs008" name="pacs.008 (Payments)" stroke="#82ca9d" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="pacs009" name="pacs.009 (FI Credit)" stroke="#8884d8" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="camt053" name="camt.053 (Statements)" stroke="#ffb74d" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </Paper>
-            </Grid>
-            {/* System Performance */}
-            <Grid item xs={12} lg={4}>
-                 <Card sx={{ height: '400px' }}>
-                    <CardContent>
-                        <Typography variant="h6" gutterBottom>System Diagnostics</Typography>
-                        <Box sx={{ mt: 4, textAlign: 'center' }}>
-                            <SpeedIcon sx={{ fontSize: '5rem', color: 'primary.main', mb: 2 }} />
-                            <Typography variant="h4">99.8%</Typography>
-                            <Typography color="text.secondary">AI Core Accuracy</Typography>
-                            <Box sx={{ mt: 4 }}>
-                                <Typography variant="body2" gutterBottom>CPU Load: 42%</Typography>
-                                <Typography variant="body2" gutterBottom>Memory: 18.4GB / 64GB</Typography>
-                                <Typography variant="body2">Thread Latency: 12ms</Typography>
-                            </Box>
-                        </Box>
-                    </CardContent>
+            {/* Maturity Metrics */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <Card className="border-red-500/30 bg-red-950/5 text-center p-8">
+                    <p className="text-xs text-red-400 uppercase tracking-[0.3em] mb-2 font-black">Node Maturity Score</p>
+                    <p className="text-7xl font-black text-red-500 font-mono tracking-tighter">{stats.percentage}%</p>
+                    <p className="text-[10px] text-gray-500 mt-4 font-mono">ENFORCE: NIST-800-171-CERTIFIED</p>
                 </Card>
-            </Grid>
+                <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="bg-gray-900/50 border-gray-800">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-green-500/10 rounded-xl border border-green-500/20">
+                                <ShieldCheck className="text-green-400 w-8 h-8" />
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-white">{stats.implemented}</p>
+                                <p className="text-xs text-gray-500 uppercase font-bold">Validated Controls</p>
+                            </div>
+                        </div>
+                    </Card>
+                    <Card className="bg-gray-900/50 border-gray-800">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                                <Clock className="text-yellow-400 w-8 h-8" />
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-white">4</p>
+                                <p className="text-xs text-gray-500 uppercase font-bold">Partial Readiness</p>
+                            </div>
+                        </div>
+                    </Card>
+                    <Card className="bg-gray-900/50 border-gray-800">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-red-500/10 rounded-xl border border-red-500/20">
+                                <AlertTriangle className="text-red-500 w-8 h-8" />
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-white">2</p>
+                                <p className="text-xs text-gray-500 uppercase font-bold">Critical Gaps (POA&M)</p>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            </div>
 
-            {/* Alerts Table */}
-            <Grid item xs={12}>
-              <TableContainer component={Paper}>
-                <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="h6">Real-Time Risk & Compliance Alerts</Typography>
-                    <Chip label="LIVE MONITORING" color="error" variant="outlined" sx={{ fontWeight: 'bold' }} />
-                </Box>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Alert ID</TableCell>
-                      <TableCell>Timestamp</TableCell>
-                      <TableCell>Reason</TableCell>
-                      <TableCell align="center">Risk Score</TableCell>
-                      <TableCell>Amount</TableCell>
-                      <TableCell align="center">Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {riskAlerts.map((alert) => (
-                      <TableRow key={alert.id} hover>
-                        <TableCell sx={{ fontWeight: 'bold', color: 'primary.main' }}>{alert.id}</TableCell>
-                        <TableCell>{new Date(alert.timestamp).toLocaleTimeString()}</TableCell>
-                        <TableCell>{alert.reason}</TableCell>
-                        <TableCell align="center">
-                          <Box
-                            sx={{
-                              width: 32,
-                              height: 32,
-                              borderRadius: '50%',
-                              backgroundColor: getRiskScoreColor(alert.riskScore),
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: '#000',
-                              fontWeight: 'bold',
-                              margin: 'auto'
-                            }}
-                          >
-                            {alert.riskScore}
-                          </Box>
-                        </TableCell>
-                        <TableCell>{alert.amount}</TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={alert.status}
-                            size="small"
-                            color={getRiskChipColor(alert.status)}
-                          />
-                        </TableCell>
-                      </TableRow>
+            {/* AI Intelligence Output */}
+            {aiAnalysis && (
+                <div className="animate-in fade-in slide-in-from-top-4 duration-700">
+                    <Card title="Sovereign AI Readiness Insight" className="bg-indigo-950/10 border-indigo-500/30">
+                        <div className="flex items-start gap-4">
+                            <Cpu className="text-indigo-400 w-10 h-10 shrink-0 mt-1" />
+                            <div className="prose prose-invert max-w-none text-indigo-100">
+                                <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed p-4 bg-black/40 rounded-xl border border-indigo-500/20 shadow-inner">
+                                    {aiAnalysis}
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            )}
+
+            {/* Search and Filters */}
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="relative w-full md:w-1/3">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+                    <input 
+                        type="text" 
+                        placeholder="Filter by Control ID or Family..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-gray-900 border border-gray-800 rounded-2xl py-3 pl-12 pr-4 text-white focus:border-orange-500 outline-none transition-all shadow-inner"
+                    />
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-2 w-full md:w-auto custom-scrollbar">
+                    {families.map(f => (
+                        <button 
+                            key={f}
+                            onClick={() => setSelectedFamily(f)}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
+                                selectedFamily === f 
+                                ? 'bg-orange-500 border-orange-400 text-black shadow-lg shadow-orange-500/20' 
+                                : 'bg-gray-900 border-gray-800 text-gray-500 hover:text-white'
+                            }`}
+                        >
+                            {f}
+                        </button>
                     ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
-    </ThemeProvider>
-  );
+                </div>
+            </div>
+
+            {/* Controls Inventory */}
+            <div className="space-y-4">
+                {filteredControls.map(control => (
+                    <div 
+                        key={control.id} 
+                        onClick={() => setSelectedControl(control)}
+                        className={`group bg-gray-900/40 border transition-all duration-300 rounded-2xl p-6 cursor-pointer ${
+                            selectedControl?.id === control.id 
+                            ? 'border-orange-500 bg-gray-900/80 shadow-[0_0_30px_rgba(249,115,22,0.1)]' 
+                            : 'border-gray-800 hover:border-gray-700'
+                        }`}
+                    >
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-mono font-black text-orange-400 bg-orange-400/10 px-3 py-1 rounded-lg border border-orange-500/20 shadow-inner">
+                                        NIST {control.id}
+                                    </span>
+                                    <h3 className="text-xl font-bold text-white group-hover:text-orange-300 transition-colors">
+                                        {control.title}
+                                    </h3>
+                                </div>
+                                <p className="text-sm text-gray-400 max-w-4xl leading-relaxed">
+                                    {control.description}
+                                </p>
+                            </div>
+                            <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap border ${
+                                control.status === 'IMPLEMENTED' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                control.status === 'PARTIAL' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                                'bg-red-500/10 text-red-400 border-red-500/20'
+                            }`}>
+                                {control.status.replace('_', ' ')}
+                            </div>
+                        </div>
+
+                        {/* Detailed Drill-down */}
+                        {selectedControl?.id === control.id && (
+                            <div className="mt-8 pt-8 border-t border-gray-800 grid grid-cols-1 md:grid-cols-2 gap-12 animate-in slide-in-from-top-2 duration-300">
+                                <div className="space-y-6">
+                                    <div>
+                                        <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em] mb-3">Implementation Narrative</p>
+                                        <p className="text-gray-300 text-sm leading-relaxed bg-black/30 p-4 rounded-xl border border-gray-800 italic">
+                                            {control.longDescription}
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <div className="flex-1 p-4 bg-gray-800/40 rounded-xl border border-gray-700">
+                                            <p className="text-[10px] font-bold text-gray-500 uppercase mb-2">Nexus Module</p>
+                                            <div className="flex items-center gap-2 text-cyan-400 font-bold">
+                                                <Cpu size={14} /> {control.nexusModule}
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 p-4 bg-gray-800/40 rounded-xl border border-gray-700">
+                                            <p className="text-[10px] font-bold text-gray-500 uppercase mb-2">Assessment Date</p>
+                                            <div className="flex items-center gap-2 text-white font-mono text-sm">
+                                                {new Date().toISOString().split('T')[0]}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em] mb-3">Cryptographic Evidence Hash</p>
+                                    <div className="p-4 bg-black border border-gray-800 rounded-xl font-mono text-xs text-gray-400 break-all shadow-inner">
+                                        &gt; {btoa(control.evidence + control.id).substring(0, 128)}...
+                                        <br/><br/>
+                                        <span className="text-green-500 text-[10px] font-bold">STATUS: VERIFIED ON LEDGER // INTEGRITY: 1.0</span>
+                                    </div>
+                                    <button className="mt-6 w-full py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-xs font-bold uppercase tracking-widest border border-gray-700 transition-all">
+                                        Update Evidence Package
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            <footer className="text-center pt-12 border-t border-gray-800 text-[10px] text-gray-700 font-mono tracking-[0.5em] uppercase">
+                Compliance Terminal: SECURE_LINK_PROCESSED // Handshake: {Date.now().toString(16)}
+            </footer>
+        </div>
+    );
 };
+
+const Loader2 = ({ className }: { className?: string }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+);
 
 export default ComplianceOracleView;

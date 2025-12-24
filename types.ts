@@ -4,7 +4,6 @@ import React, { ReactNode } from 'react';
 // Alias for compatibility
 export type UserProfile = User;
 
-// FIX: Added missing ACHDetails interface
 export interface ACHDetails {
   routingNumber: string;
   realAccountNumber: string;
@@ -100,6 +99,7 @@ export enum View {
     // --- All Components (Direct Access) ---
     AccountDetails = 'account-details',
     AccountList = 'account-list',
+    // FIX: Added missing View enum members to resolve constants.tsx and sApp.tsx errors
     AccountStatementGrid = 'account-statement-grid',
     AccountsView = 'accounts-view',
     AccountVerificationModal = 'account-verification-modal',
@@ -149,7 +149,7 @@ export enum View {
     TransactionFilter = 'transaction-filter',
     TransactionList = 'transaction-list',
     TreasuryTransactionList = 'treasury-transaction-list',
-    TreasuryView = 'treasury-view', // Added to fix sApp.tsx error
+    TreasuryView = 'treasury-view',
     UniversalObjectInspector = 'universal-object-inspector',
     VirtualAccountForm = 'virtual-account-form',
     VirtualAccountsTable = 'virtual-accounts-table',
@@ -178,12 +178,19 @@ export enum View {
     CardCustomization = 'card-customization',
 }
 
+// FIX: Expanded UserRole to include all possible values used across different AuthContexts
+export type UserRole = 'ADMIN' | 'TRADER' | 'CLIENT' | 'VISIONARY' | 'CARETAKER' | 'QUANT_ANALYST' | 'SYSTEM_ARCHITECT' | 'ETHICS_OFFICER' | 'DATA_SCIENTIST' | 'NETWORK_WEAVER' | 'CITIZEN';
+
+// FIX: Expanded SecurityLevel to include all levels required for user extension
+export type SecurityLevel = 'STANDARD' | 'ELEVATED' | 'TRADING_UNLOCKED' | 'QUANTUM_ENCRYPTED' | 'SOVEREIGN_CLEARED' | 'ARCHITECT_LEVEL';
+
 export interface User {
   id: string;
   name: string;
   email: string;
   picture?: string;
-  roles?: string[];
+  roles?: UserRole[];
+  securityLevel?: SecurityLevel;
   netWorth?: number;
   display_name?: string;
   handle?: string;
@@ -198,8 +205,6 @@ export interface User {
   followers?: string[];
   following?: string[];
   state?: any;
-  // Added to satisfy type requirements in other files
-  securityLevel?: string; 
   tradingProfile?: any;
   biometricHashV2?: string;
   genomicSignatureId?: string;
@@ -218,12 +223,17 @@ export interface User {
 
 export interface Transaction {
   id: string;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'transfer';
   category: string;
   description: string;
   amount: number;
   date: string;
+  currency?: string;
   carbonFootprint?: number;
+  merchantDetails?: any;
+  aiCategoryConfidence?: number;
+  disputeStatus?: 'none' | 'pending' | 'resolved' | 'failed';
+  notes?: string;
 }
 
 export interface Asset {
@@ -233,6 +243,9 @@ export interface Asset {
   performanceYTD?: number;
   esgRating?: number;
   description?: string;
+  ticker?: string;
+  type?: string;
+  riskLevel?: 'Low' | 'Medium' | 'High';
 }
 
 export interface BudgetCategory {
@@ -258,30 +271,37 @@ export interface LinkedAccount {
   name: string;
   mask: string;
   institutionId: string;
+  institutionName?: string;
   type: string;
-  balance?: number; // Added
+  subtype?: string;
+  balance?: number;
+  availableBalance?: number;
+  currency?: string;
+  lastUpdated?: string;
 }
 
-export interface QuantumWeaverState {
-  stage: WeaverStage;
-  businessPlan: string;
-  feedback: string;
-  questions: AIQuestion[];
-  loanAmount: number;
-  coachingPlan: AIGoalPlan | null;
-  error: string | null;
+export interface FinancialGoal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  targetDate: string;
+  currentAmount: number;
+  iconName: string;
+  plan: AIGoalPlan | null;
+  startDate: string; 
+  riskProfile?: RiskProfile; 
+  status: 'on_track' | 'needs_attention' | 'achieved' | 'behind';
+  linkedGoals: LinkedGoal[]; 
+  recurringContributions: RecurringContribution[];
+  contributions: Contribution[];
 }
 
-export enum WeaverStage {
-  Pitch = 'pitch',
-  Analysis = 'analysis',
-  Results = 'results'
-}
-
-export interface AIQuestion {
-    id: string;
-    question: string;
-    category: string;
+export interface AIGoalPlan {
+  feasibilitySummary: string;
+  monthlyContribution: number;
+  steps: { title: string; description: string; category: string }[];
+  actionableSteps?: string[];
+  summary?: string;
 }
 
 export interface Subscription {
@@ -323,7 +343,13 @@ export interface MarketMover {
 export interface MarketplaceProduct {
   id: string;
   name: string;
-  price: number;
+  provider: string;
+  category: string;
+  description: string;
+  price: string;
+  rating: number;
+  imageUrl: string;
+  aiPersonalizationScore: number;
 }
 
 export type RiskProfile = 'conservative' | 'moderate' | 'aggressive';
@@ -348,30 +374,6 @@ export interface LinkedGoal {
     id: string;
     relationshipType: 'prerequisite' | 'dependency' | 'overflow' | 'sibling';
     triggerAmount?: number;
-}
-
-export interface FinancialGoal {
-  id: string;
-  name: string;
-  targetAmount: number;
-  targetDate: string;
-  currentAmount: number;
-  iconName: string;
-  plan: AIGoalPlan | null;
-  startDate: string; 
-  riskProfile?: RiskProfile; 
-  status: 'on_track' | 'needs_attention' | 'achieved' | 'behind';
-  linkedGoals: LinkedGoal[]; 
-  recurringContributions: RecurringContribution[];
-  contributions: Contribution[];
-}
-
-export interface AIGoalPlan {
-  feasibilitySummary: string;
-  monthlyContribution: number;
-  steps: { title: string; description: string; category: string }[];
-  actionableSteps?: string[];
-  summary?: string;
 }
 
 export interface CryptoAsset {
@@ -416,13 +418,18 @@ export interface CorporateCard {
   frozen: boolean;
   controls: CorporateCardControls;
   biometricLockEnabled: boolean;
+  cardType?: 'physical' | 'virtual';
+  expirationDate?: string;
+  currency?: string;
 }
 
 export interface CorporateCardControls {
-  atm: boolean;
-  contactless: boolean;
-  online: boolean;
+  atm?: boolean;
+  contactless?: boolean;
+  online?: boolean;
   monthlyLimit: number;
+  dailyLimit?: number;
+  internationalTransactions?: boolean;
 }
 
 export interface CorporateTransaction {
@@ -433,7 +440,7 @@ export interface CorporateTransaction {
   amount: number;
   status: string;
   timestamp: string;
-  date: string; // Ensure date is present
+  date: string;
   description?: string;
 }
 
@@ -491,7 +498,7 @@ export interface PaymentOrder {
   status: 'needs_approval' | 'approved' | 'denied' | 'paid';
   date: string;
   type: string;
-  dueDate?: string; // for invoices mapped
+  dueDate?: string;
 }
 
 export interface Invoice {
@@ -688,7 +695,7 @@ export interface Business {
     expenses: number;
     employees: string[];
     status: 'active' | 'bankrupt' | 'acquired';
-    marketing_factor: number; // 0-1 multiplier
+    marketing_factor: number; 
     businessPlan?: string;
     valuation?: number;
     cashBalance?: number;
@@ -1003,7 +1010,7 @@ export type StripeSubscription = {
   amount: number;
 };
 
-export type StripeResource = any; // Placeholder for generic resource
+export type StripeResource = any; 
 
 export interface DatabaseConfig {
     host: string;
@@ -1019,6 +1026,34 @@ export interface WebDriverStatus {
     status: 'idle' | 'running' | 'completed' | 'error';
     activeTask: string | null;
     logs: string[];
+}
+
+// FIX: Added AIQuestion interface used in QuantumWeaverView
+export interface AIQuestion {
+  id: string;
+  question: string;
+  category: string;
+}
+
+// FIX: Added video generation types used in AIAdStudioView
+export type VideoModel = 'veo-3.1-fast-generate-preview' | 'veo-3.1-generate-preview';
+export type AspectRatio = '16:9' | '9:16';
+export interface GenerationSettings {
+  numberOfVideos: number;
+  resolution: '720p' | '1080p';
+  aspectRatio: AspectRatio;
+}
+export type GenerationMode = 'text' | 'image-to-video' | 'video-to-video';
+export interface VideoAsset {
+  uri: string;
+}
+export interface AdProject {
+  id: string;
+  name: string;
+  prompt: string;
+}
+export interface AppConfig {
+  apiKey: string;
 }
 
 // Additional types for ComplianceView

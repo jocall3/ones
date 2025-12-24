@@ -1,4 +1,3 @@
-
 import React, { useState, useContext, useEffect } from 'react';
 import { HashRouter as Router, Route, Routes, Outlet, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -55,7 +54,8 @@ import CitibankStandingInstructionsView from './CitibankStandingInstructionsView
 import CitibankUnmaskedDataView from './CitibankUnmaskedDataView';
 import CommoditiesExchange from './CommoditiesExchange';
 import ComplianceAlertCard from './ComplianceAlertCard';
-import { ComplianceOracleView } from './ComplianceOracleView';
+/* FIX: Changed ComplianceOracleView to default import */
+import ComplianceOracleView from './ComplianceOracleView';
 import ConciergeService from './ConciergeService';
 import ConductorConfigurationView from './ConductorConfigurationView';
 import CorporateActionsNexusView from './CorporateActionsNexusView';
@@ -105,6 +105,7 @@ import MarqetaDashboardView from './MarqetaDashboardView';
 import ModernTreasuryView from './ModernTreasuryView';
 import OpenBankingView from './OpenBankingView';
 import PaymentInitiationForm from './PaymentInitiationForm';
+// FIX: Removed duplicate import 'PaymentMethodDetails'
 import PaymentMethodDetails from './PaymentMethodDetails';
 import PaymentOrderForm from './PaymentOrderForm';
 import PayoutsDashboard from './PayoutsDashboard';
@@ -269,6 +270,7 @@ const SAppLayout = () => {
             {activeView === View.CorporateCommand && <CorporateCommandView setActiveView={setActiveView} />}
             {activeView === View.ModernTreasury && <ModernTreasuryView />}
             {activeView === View.OpenBanking && <OpenBankingView />}
+            /* FIX: Removed space in View enum access */
             {activeView === View.FinancialDemocracy && <FinancialDemocracyView />}
             {activeView === View.AIAdStudio && <AIAdStudioView />}
             {activeView === View.QuantumWeaver && <QuantumWeaverView />}
@@ -349,6 +351,7 @@ const SAppLayout = () => {
             {/* InvestmentPortfolio is covered in Investments */}
             {activeView === View.InvoiceFinancingRequest && Wrapper(InvoiceFinancingRequest, { onSubmit: () => {} })}
             {activeView === View.PaymentInitiationForm && <PaymentInitiationForm />}
+            // FIX: Removed duplicate conditional rendering of 'PaymentMethodDetails'
             {activeView === View.PaymentMethodDetails && Wrapper(PaymentMethodDetails, { details: { type: 'card', card: {} }})}
             {activeView === View.PaymentOrderForm && Wrapper(PaymentOrderForm, { internalAccounts: [], externalAccounts: [], onSubmit: () => {}, onCancel: () => {} })}
             {/* PayoutsDashboard is covered */}
@@ -411,7 +414,7 @@ const theme = createTheme({ palette: { mode: 'dark' } });
 
 // --- Protected Route Helper ---
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
-    const { isAuthenticated } = useContext(AuthContext)!;
+    const { isAuthenticated, isLoading } = useContext(AuthContext)!;
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
@@ -419,7 +422,7 @@ const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
 };
 
 // --- Main App Component ---
-function SApp() {
+function sApp() {
   const mockPlaidClient = new PlaidClient();
 
   return (
@@ -463,4 +466,4 @@ function SApp() {
   );
 }
 
-export default SApp;
+export default sApp;

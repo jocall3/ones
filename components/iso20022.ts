@@ -1,10 +1,13 @@
+
 // ISO 20022 External Code Sets
 // This file defines the types used for external codes in ISO 20022 messages.
 
+export const ISO_20022_REGISTRY_VERSION = '2024.Q3';
+
 export type ExternalAcceptedReason1Code = 'ADEA' | 'NSTP' | 'SMPG';
 export type ExternalAccountIdentification1Code = 'AIIN' | 'BBAN' | 'CUID' | 'UPIC';
-export type ExternalAgentInstruction1Code = 'CHQB' | 'HOLD' | 'PHOA' | 'TELA';
-export type ExternalAgreementType1Code = 'ISDA' | 'GMRA';
+export type ExternalAgentInstruction1Code = 'CHQB' | 'HOLD' | 'INQR' | 'PBEN' | 'PHOA' | 'PHOB' | 'TELA' | 'TELB' | 'TFRO' | 'TTIL';
+export type ExternalAgreementType1Code = 'AUSL' | 'BIAG' | 'CARA' | 'CDEA' | 'CHMA' | 'CHRA' | 'CMOP' | 'CNBR' | 'CSDA' | 'DEMA' | 'DERD' | 'DERP' | 'DERV' | 'EFMA' | 'ESRA' | 'EUMA' | 'FMAT' | 'FPCA' | 'FRFB' | 'GESL' | 'GMRA' | 'GMSL' | 'IDMA' | 'ISDA' | 'JPBL' | 'JPBR' | 'JPSL' | 'KRRA' | 'KRSL' | 'MEFI' | 'MRAA' | 'MSLA' | 'OSLA' | 'OTHR';
 export type ExternalAuthenticationChannel1Code = 'MANU' | 'ONLI' | 'ATMA' | 'CARD' | 'INBA' | 'MOBI';
 export type ExternalAuthenticationMethod1Code = 'PKI' | 'TOKEN' | 'ACSN' | 'ADDB' | 'ADDS' | 'APKI' | 'ARNB' | 'ARPC' | 'ARQC' | 'ATCC' | 'BIOM' | 'BTHD' | 'CDCM' | 'CDHI' | 'CHDN' | 'CHSA' | 'CHSN' | 'CPSG' | 'CSCV' | 'CSEC' | 'CUID' | 'DRID' | 'DRVI' | 'EMAL' | 'EMIN' | 'EMRN' | 'FBIG' | 'FBIO' | 'FCPN' | 'FPIN' | 'IDCN' | 'MANU' | 'MOBL' | 'NBIG' | 'NPIN' | 'NTID' | 'NVSC' | 'OCHI' | 'OFPE' | 'OLDA' | 'OLDS' | 'OTHN' | 'OTHP' | 'OTPW' | 'PASS' | 'PCDV' | 'PHOM' | 'PHNB' | 'PKIS' | 'PLOB' | 'PPSG' | 'PRXY' | 'PSCD' | 'PSVE' | 'PSWD' | 'PWOR' | 'QWAC' | 'SCNL' | 'SCRT' | 'SHAF' | 'SHAT' | 'SSYN' | 'THDS' | 'AUVA' | 'TAVV' | 'TXID' | 'LAWE';
 export type ExternalAuthorityExchangeReason1Code = 'TAX' | 'LEGAL';
@@ -40,7 +43,7 @@ export type ExternalCreditLineType1Code = 'REV';
 export type ExternalCreditorAgentInstruction1Code = 'PHOB';
 export type ExternalCreditorEnrolmentAmendmentReason1Code = 'BANK';
 export type ExternalCreditorEnrolmentCancellationReason1Code = 'CUST';
-export type ExternalCreditorEnrolmentStatusReason1Code = 'RJCT';
+// FIX: Removed duplicate identifier 'ExternalCreditorEnrolmentStatusReason1Code'
 export type ExternalCreditorEnrolmentStatusReason1Code = 'RJCT';
 export type ExternalCreditorReferenceType1Code = 'SCOR';
 export type ExternalDateFrequency1Code = 'DAIL' | 'WEEK';
@@ -143,7 +146,6 @@ export type ExternalTradeTransactionCondition1Code = 'BCPD';
 export type ExternalTypeOfParty1Code = 'ALIA';
 export type ExternalUnableToApplyIncorrectData1Code = 'IN01';
 export type ExternalUnableToApplyMissingData1Code = 'MS01';
-// FIX: Removed duplicate identifier 'ExternalUnderlyingTradeTransactionType1Code' which was defined twice on lines 148 and 154
 export type ExternalUnderlyingTradeTransactionType1Code = 'COMM';
 export type ExternalUndertakingAmountType1Code = 'ORIG';
 export type ExternalUndertakingDocumentType1Code = 'COOL';

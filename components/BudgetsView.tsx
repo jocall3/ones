@@ -4,7 +4,7 @@ import Card from './Card';
 import { DataContext } from '../context/DataContext';
 
 // Define the NewBudgetModal as a simple internal component to avoid import issues if the file doesn't exist yet
-const NewBudgetModal: React.FC<{ 
+export const NewBudgetModal: React.FC<{ 
     isOpen: boolean; 
     onClose: () => void; 
     onAdd: (name: string, limit: number) => void; 

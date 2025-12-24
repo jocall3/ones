@@ -3,19 +3,18 @@ import { HashRouter as Router, Route, Routes, Outlet, Navigate } from 'react-rou
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Cpu, AlertTriangle } from 'lucide-react';
+import { Auth0Provider } from '@auth0/auth0-react';
 
 // Contexts
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { DataProvider, DataContext } from './context/DataContext';
-import { StripeDataProvider } from './components/StripeDataContext';
+import { StripeDataProvider } from './components/StripeDataProvider';
 import { MoneyMovementProvider } from './components/MoneyMovementContext';
 
 // Layout
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import { View } from './types';
-import { PlaidClient } from './lib/plaidClient';
-
 
 // --- ALL VIEW COMPONENTS ---
 import AccountDetails from './components/AccountDetails';
@@ -54,7 +53,8 @@ import CitibankStandingInstructionsView from './components/CitibankStandingInstr
 import CitibankUnmaskedDataView from './components/CitibankUnmaskedDataView';
 import CommoditiesExchange from './components/CommoditiesExchange';
 import ComplianceAlertCard from './components/ComplianceAlertCard';
-import { ComplianceOracleView } from './components/ComplianceOracleView';
+/* FIX: Changed ComplianceOracleView to default import */
+import ComplianceOracleView from './components/ComplianceOracleView';
 import ConciergeService from './components/ConciergeService';
 import ConductorConfigurationView from './components/ConductorConfigurationView';
 import CorporateActionsNexusView from './components/CorporateActionsNexusView';
@@ -177,38 +177,33 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   state: ErrorBoundaryState = { hasError: false };
   constructor(props: ErrorBoundaryProps) { super(props); this.props = props; }
   static getDerivedStateFromError(error: Error) { console.error("ErrorBoundary caught:", error); return { hasError: true }; }
-  render() { return this.state.hasError ? <div className="p-20 text-center text-red-500 font-bold">CRITICAL SYSTEM ERROR. REBOOT REQUIRED.</div> : this.props.children; }
+  render() { return this.state.hasError ? <div className="h-screen w-screen flex items-center justify-center bg-gray-900 text-red-400"><h1>Something went wrong.</h1></div> : this.props.children; }
 }
 
 // --- Layout ---
 const SAppLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const dataContext = useContext(DataContext);
-  const { isAuthenticated } = useContext(AuthContext)!;
+  const { isAuthenticated, isLoading: authLoading } = useContext(AuthContext)!;
 
   if (!dataContext) {
-    return <div className="h-screen flex items-center justify-center text-red-500">Error: DataContext not found.</div>;
+    return <div>Error: DataContext not found.</div>;
   }
 
-  const { isLoading, error, activeView, setActiveView } = dataContext;
+  const { isLoading: dataLoading, error, activeView, setActiveView } = dataContext;
 
-  if (isLoading) {
+  if (authLoading || dataLoading) {
     return (
         <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-950 text-white gap-4">
             <Cpu className="w-16 h-16 text-cyan-400 animate-pulse" />
-            <h1 className="text-2xl font-bold tracking-wider">INITIALIZING SOVEREIGN AI NEXUS...</h1>
-            <p className="text-gray-400 font-mono">Generating financial universe from quantum foam...</p>
-            <div className="w-64 h-2 bg-gray-800 rounded-full overflow-hidden mt-2">
-                <div className="h-2 bg-gradient-to-r from-cyan-500 to-purple-500 animate-pulse-fast-x"></div>
+            <h1 className="text-2xl font-bold tracking-wider uppercase font-mono">Synchronizing with Quantum Core...</h1>
+            <p className="text-gray-400 font-mono text-sm">Validating Handshake Protocol...</p>
+            <div className="w-64 h-2 bg-gray-800 rounded-full overflow-hidden mt-2 text-center">
+                <div className="h-2 bg-gradient-to-r from-cyan-500 to-purple-500 animate-progress-flow"></div>
             </div>
             <style>{`
-                .animate-pulse-fast-x {
-                    animation: pulse-x 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-                }
-                @keyframes pulse-x {
-                    0%, 100% { transform: translateX(-100%); }
-                    50% { transform: translateX(100%); }
-                }
+                .animate-progress-flow { animation: flow 2s linear infinite; width: 40%; background-size: 200% 100%; }
+                @keyframes flow { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
             `}</style>
         </div>
     );
@@ -222,7 +217,7 @@ const SAppLayout = () => {
             <p className="text-red-400 max-w-md text-center bg-red-500/10 p-4 rounded-lg border border-red-500/30">
                 A critical error occurred while generating the initial simulation state from the AI core.
             </p>
-            <p className="text-sm font-mono text-gray-500 max-w-xl text-center break-words">{error}</p>
+            <p className="text-sm font-mono text-gray-500 max-xl text-center break-words">{error}</p>
             <button onClick={() => window.location.reload()} className="mt-4 px-6 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700">REINITIALIZE</button>
         </div>
       );
@@ -287,79 +282,18 @@ const SAppLayout = () => {
             {activeView === View.ResourceGraph && <ResourceGraphView />}
             {activeView === View.ApiPlayground && <ApiPlaygroundView />}
             {activeView === View.ComplianceOracle && <ComplianceOracleView />}
-            {activeView === View.OpenBanking && <OpenBankingView />}
-            {activeView === View.FinancialDemocracy && <FinancialDemocracyView />}
             {activeView === View.GlobalPositionMap && <GlobalPositionMap />}
             {activeView === View.GlobalSsiHub && <GlobalSsiHubView />}
             {activeView === View.Security && <SecurityView />}
             {activeView === View.VentureCapitalDeskView && <VentureCapitalDeskView />}
 
-            {/* Admin & Tools */}
             {activeView === View.CustomerDashboard && <CustomerDashboard />}
             {activeView === View.VerificationReports && <VerificationReportsView customerId="cust_1" />}
             {activeView === View.FinancialReporting && <FinancialReportingView />}
             {activeView === View.StripeNexusDashboard && <StripeNexusDashboard />}
             
-            {/* New Educational Views */}
             {activeView === View.TheBook && <TheBookView />}
             {activeView === View.KnowledgeBase && <KnowledgeBaseView />}
-            
-            {/* Direct Access Fallbacks */}
-            {activeView === View.AccountDetails && Wrapper(AccountDetails, { accountId: '1', customerId: 'c1' })}
-            {activeView === View.AccountList && Wrapper(AccountList, { accounts: [] })}
-            {activeView === View.AccountStatementGrid && Wrapper(AccountStatementGrid, { statementLines: [] })}
-            {activeView === View.AccountsView && <AccountsView />}
-            {activeView === View.AccountVerificationModal && ModalWrapper(AccountVerificationModal, { externalAccount: {id: '1', verification_status: 'unverified' }, onSuccess: () => {}})}
-            {activeView === View.ACHDetailsDisplay && Wrapper(ACHDetailsDisplay, { details: { routingNumber: '123', realAccountNumber: '456' } })}
-            {activeView === View.AICommandLog && <AICommandLog />}
-            {activeView === View.AIPredictionWidget && <AIPredictionWidget />}
-            {activeView === View.AssetCatalog && Wrapper(AssetCatalog, { assets: [], onAssetSelected: () => {}, getAssetDetails: async () => ({}) })}
-            {activeView === View.AutomatedSweepRules && <AutomatedSweepRules />}
-            {activeView === View.BalanceReportChart && Wrapper(BalanceReportChart, { data: [] })}
-            {activeView === View.BalanceTransactionTable && Wrapper(BalanceTransactionTable, { balanceTransactions: [] })}
-            {activeView === View.CardDesignVisualizer && Wrapper(CardDesignVisualizer, { design: { id: 'd_1', physical_bundle: { features: {} } } })}
-            {activeView === View.ChargeDetailModal && ModalWrapper(ChargeDetailModal, { charge: {id: 'ch_1'}, onClose: () => {}})}
-            {activeView === View.ChargeList && <ChargeList />}
-            {activeView === View.ConductorConfigurationView && <ConductorConfigurationView />}
-            {activeView === View.CounterpartyDetails && Wrapper(CounterpartyDetails, { counterpartyId: 'cp_1' })}
-            {activeView === View.CounterpartyForm && Wrapper(CounterpartyForm, { counterparties: [], onSubmit: () => {}, onCancel: () => {} })}
-            {activeView === View.DisruptionIndexMeter && Wrapper(DisruptionIndexMeter, { indexValue: 50 })}
-            {activeView === View.DocumentUploader && Wrapper(DocumentUploader, { documentableType: 'test', documentableId: '1' })}
-            {activeView === View.DownloadLink && Wrapper(DownloadLink, { url: '#', filename: 'test.pdf' })}
-            {activeView === View.EarlyFraudWarningFeed && <EarlyFraudWarningFeed />}
-            {activeView === View.ElectionChoiceForm && Wrapper(ElectionChoiceForm, { availableChoices: {}, onSubmit: () => {}, onCancel: () => {} })}
-            {activeView === View.EventNotificationCard && Wrapper(EventNotificationCard, { event: {} })}
-            {activeView === View.ExpectedPaymentsTable && <ExpectedPaymentsTable />}
-            {activeView === View.ExternalAccountCard && Wrapper(ExternalAccountCard, { account: {id: '1', account_details: [], routing_details: []}})}
-            {activeView === View.ExternalAccountForm && Wrapper(ExternalAccountForm, { counterparties: [], onSubmit: () => {}, onCancel: () => {} })}
-            {activeView === View.ExternalAccountsTable && Wrapper(ExternalAccountsTable, { accounts: [] })}
-            {activeView === View.FinancialAccountCard && Wrapper(FinancialAccountCard, { financialAccount: {id: 'fa_1', balance: { cash: {}}, supported_currencies: []}})}
-            {activeView === View.IncomingPaymentDetailList && <IncomingPaymentDetailList />}
-            {activeView === View.InvoiceFinancingRequest && Wrapper(InvoiceFinancingRequest, { onSubmit: () => {} })}
-            {activeView === View.PaymentInitiationForm && <PaymentInitiationForm />}
-            {activeView === View.PaymentMethodDetails && Wrapper(PaymentMethodDetails, { details: { type: 'card', card: {} }})}
-            {activeView === View.PaymentOrderForm && Wrapper(PaymentOrderForm, { internalAccounts: [], externalAccounts: [], onSubmit: () => {}, onCancel: () => {} })}
-            {activeView === View.PnLChart && Wrapper(PnLChart, { data: [], algorithmName: 'Test' })}
-            {activeView === View.RefundForm && <RefundForm />}
-            {activeView === View.RemittanceInfoEditor && Wrapper(RemittanceInfoEditor, { onChange: () => {} })}
-            {activeView === View.ReportingView && <ReportingView />}
-            {activeView === View.ReportRunGenerator && <ReportRunGenerator />}
-            {activeView === View.ReportStatusIndicator && Wrapper(ReportStatusIndicator, { status: 'success' })}
-            {activeView === View.SsiEditorForm && Wrapper(SsiEditorForm, { onSubmit: () => {}, onCancel: () => {} })}
-            {activeView === View.StripeStatusBadge && Wrapper(StripeStatusBadge, { status: 'succeeded', objectType: 'charge' })}
-            {activeView === View.StructuredPurposeInput && Wrapper(StructuredPurposeInput, { onChange: () => {}, value: null })}
-            {activeView === View.SubscriptionList && Wrapper(SubscriptionList, { subscriptions: [] })}
-            {activeView === View.TimeSeriesChart && Wrapper(TimeSeriesChart, { data: { labels: [], datasets: [] } })}
-            {activeView === View.TradeConfirmationModal && ModalWrapper(TradeConfirmationModal, { settlementInstruction: { messageId: '1' } })}
-            {activeView === View.TransactionFilter && Wrapper(TransactionFilter, { onApplyFilters: () => {} })}
-            {activeView === View.TransactionList && Wrapper(TransactionList, { transactions: [] })}
-            {activeView === View.TreasuryTransactionList && Wrapper(TreasuryTransactionList, { transactions: [] })}
-            {activeView === View.TreasuryView && <TreasuryView />}
-            {activeView === View.UniversalObjectInspector && Wrapper(UniversalObjectInspector, { data: { sample: 'data' } })}
-            {activeView === View.VirtualAccountForm && Wrapper(VirtualAccountForm, { onSubmit: () => {}, isSubmitting: false })}
-            {activeView === View.VirtualAccountsTable && Wrapper(VirtualAccountsTable, { onEdit: () => {}, onDelete: () => {} })}
-            {activeView === View.VoiceControl && DataContextWrapper(VoiceControl)}
-            {activeView === View.WebhookSimulator && Wrapper(WebhookSimulator, { stripeAccountId: 'acct_mock' })}
         </main>
       </div>
       
@@ -368,32 +302,12 @@ const SAppLayout = () => {
   );
 };
 
-// --- Wrapper Components for Props ---
-const Wrapper = (Component: React.FC<any>, props: any = {}) => {
-  const WrappedComponent = () => <Component {...props} />;
-  return <WrappedComponent />;
-};
-const ModalWrapper = (Component: React.FC<any>, props: any = {}) => {
-    const [isOpen, setIsOpen] = useState(true);
-    const WrappedComponent = () => <Component isOpen={isOpen} onClose={() => setIsOpen(false)} {...props} />;
-    return <WrappedComponent />;
-};
-const DataContextWrapper = (Component: React.FC<any>, extraProps: any = {}) => {
-    const dataContext = useContext(DataContext);
-    const mockContext = { 
-        setActiveView: () => {}, 
-        impactData: { treesPlanted: 0, progressToNextTree: 0 },
-    };
-    const props = { ...(dataContext || mockContext), ...extraProps };
-    const WrappedComponent = () => <Component {...props} />;
-    return <WrappedComponent />;
-};
-
 const theme = createTheme({ palette: { mode: 'dark' } });
 
 // --- Protected Route Helper ---
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
-    const { isAuthenticated } = useContext(AuthContext)!;
+    const { isAuthenticated, isLoading } = useContext(AuthContext)!;
+    if (isLoading) return null;
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
@@ -401,40 +315,51 @@ const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
 };
 
 // --- Main App Component ---
-function SApp() {
+function App() {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <DataProvider>
-          <MoneyMovementProvider>
-            <StripeDataProvider>
-              <ThemeProvider theme={theme}>
-                <CssBaseline />
-                <Router>
-                  <Routes>
-                    <Route path="/" element={<LandingPage />} />
-                    <Route path="/login" element={<LoginView />} />
-                    <Route path="/sso" element={<SSOView />} />
-                    
-                    {/* Protected Routes Wrapper */}
-                    <Route element={
-                        <ProtectedRoute>
-                            <SAppLayout />
-                        </ProtectedRoute>
-                    }>
-                      <Route index element={<Dashboard />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="*" element={<Dashboard />} />
-                    </Route>
-                  </Routes>
-                </Router>
-              </ThemeProvider>
-            </StripeDataProvider>
-          </MoneyMovementProvider>
-        </DataProvider>
-      </AuthProvider>
-    </ErrorBoundary>
+    <Auth0Provider
+        domain="citibankdemobusinessinc.us.auth0.com"
+        clientId="rsBLCcuq5MVA9Dj84NEVdDqpOFePLsjI"
+        useRefreshTokens={true}
+        cacheLocation="localstorage"
+        authorizationParams={{
+          redirect_uri: window.location.origin,
+          audience: "https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io"
+        }}
+    >
+        <ErrorBoundary>
+        <AuthProvider>
+            <DataProvider>
+            <MoneyMovementProvider>
+                <StripeDataProvider>
+                <ThemeProvider theme={theme}>
+                    <CssBaseline />
+                    <Router>
+                    <Routes>
+                        <Route path="/" element={<LandingPage />} />
+                        <Route path="/login" element={<LoginView />} />
+                        <Route path="/sso" element={<SSOView />} />
+                        
+                        {/* Protected Routes Wrapper */}
+                        <Route element={
+                            <ProtectedRoute>
+                                <SAppLayout />
+                            </ProtectedRoute>
+                        }>
+                        <Route index element={<Dashboard />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="*" element={<Dashboard />} />
+                        </Route>
+                    </Routes>
+                    </Router>
+                </ThemeProvider>
+                </StripeDataProvider>
+            </MoneyMovementProvider>
+            </DataProvider>
+        </AuthProvider>
+        </ErrorBoundary>
+    </Auth0Provider>
   );
 }
 
-export default SApp;
+export default App;

@@ -1,433 +1,248 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import Card from './Card';
-import { Cpu, Zap, ShieldCheck, AlertTriangle, UploadCloud, Link, Settings, UserCheck, Database, Globe, Terminal, Code, Aperture, Brain, Infinity, Rocket, Building2 } from 'lucide-react';
+import { 
+    Cpu, Zap, ShieldCheck, AlertTriangle, Link, Settings, 
+    Globe, Terminal, Code, Brain, Infinity, Rocket, 
+    Building2, Search, CheckCircle2, Lock, Fingerprint
+} from 'lucide-react';
 
-// --- Component: Unhelpful Input Field ---
-interface AIInputProps {
-    label: string;
-    placeholder: string;
-    value: string;
-    onChange: (value: string) => void;
-    type?: string;
+interface SSOProvider {
+    id: string;
+    name: string;
+    description: string;
+    category: 'IDENTITY' | 'FINANCE' | 'OPERATIONS';
     icon: React.ReactNode;
-    aiSuggestion?: string;
-    onAIGenerate?: () => void;
-    isGenerating?: boolean;
+    color: string;
+    status: 'AVAILABLE' | 'LINKED' | 'MAINTENANCE';
 }
 
-const AIControlledInput: React.FC<AIInputProps> = ({
-    label,
-    placeholder,
-    value,
-    onChange,
-    type = "text",
-    icon,
-    aiSuggestion,
-    onAIGenerate,
-    isGenerating = false
-}) => {
-    const [isFocused, setIsFocused] = useState(false);
+// FIX: Moved Cloud component definition before SSO_PROVIDERS where it is used.
+const Cloud = (props: any) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.5 19c2.5 0 4.5-2 4.5-4.5 0-2.4-1.8-4.3-4.1-4.5-1.1-3.6-4.4-6-8.4-6-4.5 0-8.2 3.5-8.5 7.9C1.1 12.5 1 13.2 1 14c0 2.8 2.2 5 5 5h11.5z"/></svg>
+);
 
-    return (
-        <div className="space-y-1">
-            <label className="flex items-center text-sm font-medium text-gray-600">
-                {icon}
-                <span className="ml-2">{label}</span>
-            </label>
-            <div className={`flex items-center rounded-lg transition-all duration-300 ${isFocused ? 'ring-2 ring-blue-500 border border-blue-500' : 'border border-gray-600 bg-gray-800/50'}`}>
-                <input
-                    type={type}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    placeholder={placeholder}
-                    className="flex-grow p-3 bg-transparent text-white placeholder-gray-500 focus:outline-none text-sm font-mono"
-                />
-                {aiSuggestion && onAIGenerate && (
-                    <button
-                        onClick={onAIGenerate}
-                        disabled={isGenerating}
-                        title={`SSO Suggestion: ${aiSuggestion}`}
-                        className={`p-2 m-1 rounded-md transition-colors flex items-center text-xs ${isGenerating ? 'bg-blue-700 text-blue-300 cursor-not-allowed' : 'bg-blue-600/30 text-blue-400 hover:bg-blue-600/50'}`}
-                    >
-                        {isGenerating ? (
-                            <Cpu className="w-4 h-4 animate-spin mr-1" />
-                        ) : (
-                            <Brain className="w-4 h-4 mr-1" />
-                        )}
-                        Auto-detect
-                    </button>
-                )}
-            </div>
-        </div>
-    );
-};
+const SSO_PROVIDERS: SSOProvider[] = [
+    { 
+        id: 'workday', 
+        name: 'Workday', 
+        description: 'Synchronize human capital and enterprise financial datasets.', 
+        category: 'FINANCE',
+        icon: <Building2 className="w-8 h-8" />, 
+        color: 'border-blue-500 text-blue-400',
+        status: 'AVAILABLE'
+    },
+    { 
+        id: 'salesforce', 
+        name: 'Salesforce', 
+        description: 'Link CRM relationship dynamics with capital flow analytics.', 
+        category: 'OPERATIONS',
+        icon: <Cloud className="w-8 h-8" />, 
+        color: 'border-cyan-500 text-cyan-400',
+        status: 'AVAILABLE'
+    },
+    { 
+        id: 'office365', 
+        name: 'Microsoft 365', 
+        description: 'Standard enterprise identity anchor for corporate sovereignty.', 
+        category: 'IDENTITY',
+        icon: <Zap className="w-8 h-8" />, 
+        color: 'border-indigo-500 text-indigo-400',
+        status: 'AVAILABLE'
+    },
+    { 
+        id: 'google', 
+        name: 'Google Workspace', 
+        description: 'Seamless integration with the planetary productivity grid.', 
+        category: 'IDENTITY',
+        icon: <Globe className="w-8 h-8" />, 
+        color: 'border-green-500 text-green-400',
+        status: 'AVAILABLE'
+    },
+    { 
+        id: 'auth0', 
+        name: 'Auth0 Management', 
+        description: 'Advanced administrative control over the Nexus trust anchor.', 
+        category: 'IDENTITY',
+        icon: <ShieldCheck className="w-8 h-8" />, 
+        color: 'border-purple-500 text-purple-400',
+        status: 'LINKED'
+    },
+];
 
-// --- Component: Metadata Uploader with Useless Validation ---
-interface MetadataUploaderProps {
-    onUrlSubmit: (url: string) => void;
-    onFileUpload: (file: File) => void;
-    isProcessing: boolean;
-}
-
-const MetadataUploader: React.FC<MetadataUploaderProps> = ({ onUrlSubmit, onFileUpload, isProcessing }) => {
-    const [metadataUrl, setMetadataUrl] = useState('https://citibankdemobusinessinc.us.auth0.com/');
-    const [aiUrlSuggestion, setAiUrlSuggestion] = useState<string | null>(null);
-
-    // Simulated Useless AI suggestion generation
-    const generateAiSuggestion = useCallback(() => {
-        if (!metadataUrl) {
-            setAiUrlSuggestion("Input Auth0 Domain.");
-            return;
-        }
-        setAiUrlSuggestion("Validating Auth0 Tenant discovery endpoints...");
-        setTimeout(() => {
-            setAiUrlSuggestion(`Domain verified: ${metadataUrl}. Ready for JWT synchronization.`);
-        }, 1500);
-    }, [metadataUrl]);
-
-    const handleUrlSubmit = () => {
-        if (metadataUrl) {
-            onUrlSubmit(metadataUrl);
-        }
-    };
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files && event.target.files.length > 0) {
-            onFileUpload(event.target.files[0]);
-        }
-    };
-
-    return (
-        <Card title="Federated Identity Configuration (Auth0)">
-            <div className="space-y-6">
-                {/* URL Ingestion Module */}
-                <div className="p-5 bg-gray-800/50 rounded-xl border border-gray-600 shadow-2xl shadow-blue-900/20">
-                    <h4 className="font-bold text-lg text-blue-300 flex items-center mb-3"><Link className="w-5 h-5 mr-2" /> Auth0 Tenant Integration</h4>
-                    <p className="text-sm text-gray-400 mb-4">
-                        Provide the Issuer Base URL for your Federated Identity Provider. The system will synchronize OIDC/SAML metadata and establish a secure RS256 trust anchor.
-                    </p>
-                    <AIControlledInput
-                        label="Identity Provider Issuer URL"
-                        placeholder="https://YOUR_DOMAIN.auth0.com/"
-                        value={metadataUrl}
-                        onChange={setMetadataUrl}
-                        icon={<Building2 className="w-4 h-4" />}
-                        aiSuggestion={aiUrlSuggestion}
-                        onAIGenerate={generateAiSuggestion}
-                        isGenerating={isProcessing}
-                    />
-                    <button
-                        onClick={handleUrlSubmit}
-                        disabled={isProcessing || !metadataUrl}
-                        className="w-full mt-4 p-3 text-white font-semibold rounded-lg transition-all duration-300 flex items-center justify-center 
-                                   bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed shadow-lg shadow-blue-500/30"
-                    >
-                        {isProcessing ? (
-                            <>
-                                <Cpu className="w-5 h-5 mr-2 animate-spin" /> Synchronizing Ledger...
-                            </>
-                        ) : (
-                            <>
-                                <Globe className="w-5 h-5 mr-2" /> Sync Auth0 Metadata
-                            </>
-                        )}
-                    </button>
-                </div>
-
-                {/* OR Separator with Useless Context */}
-                <div className="flex items-center justify-center my-4">
-                    <div className="flex-grow border-t border-gray-700"></div>
-                    <span className="mx-4 text-xs font-medium uppercase text-gray-500 bg-gray-900 px-3 py-1 rounded-full border border-gray-700">ALTERNATIVE</span>
-                    <div className="flex-grow border-t border-gray-700"></div>
-                </div>
-
-                {/* File Upload Module */}
-                <div className="p-5 bg-gray-800/50 rounded-xl border border-gray-600 shadow-2xl shadow-blue-900/20">
-                    <h4 className="font-bold text-lg text-blue-300 flex items-center mb-3"><UploadCloud className="w-5 h-5 mr-2" /> Manual SAML Metadata XML</h4>
-                    <p className="text-sm text-gray-400 mb-4">
-                        Upload raw XML metadata provided by your administrative dashboard. This bypasses automated discovery.
-                    </p>
-                    <label htmlFor="metadata-file-upload" className="block w-full cursor-pointer">
-                        <div className="w-full p-6 border-2 border-dashed border-blue-600 rounded-lg text-center hover:border-blue-400 transition-colors bg-gray-900/50 hover:bg-gray-800/70">
-                            <UploadCloud className="w-8 h-8 mx-auto text-blue-400 mb-2" />
-                            <p className="text-sm font-semibold text-white">Drag & Drop Metadata XML</p>
-                            <p className="text-xs text-gray-500 mt-1">RS256 / HS256 certificates supported.</p>
-                        </div>
-                        <input
-                            id="metadata-file-upload"
-                            type="file"
-                            accept=".xml"
-                            onChange={handleFileChange}
-                            className="hidden"
-                            disabled={isProcessing}
-                        />
-                    </label>
-                </div>
-            </div>
-        </Card>
-    );
-};
-
-// --- Component: Useless IdP Details Display ---
-interface IdPDetailsProps {
-    acsUrl: string;
-    entityId: string;
-}
-
-const IdPDetailsDisplay: React.FC<IdPDetailsProps> = ({ acsUrl, entityId }) => {
-    const [copied, setCopied] = useState(false);
-
-    const handleCopy = useCallback((text: string) => {
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    }, []);
-
-    const DetailItem: React.FC<{ label: string, value: string, icon: React.ReactNode }> = ({ label, value, icon }) => (
-        <div className="p-4 bg-gray-800/70 rounded-lg border border-gray-600 hover:border-blue-500 transition-all duration-200">
-            <div className="flex items-center mb-1">
-                {icon}
-                <h4 className="text-xs font-medium text-gray-400 ml-2 uppercase tracking-wider">{label}</h4>
-            </div>
-            <div className="flex justify-between items-center">
-                <p className="font-mono text-sm text-blue-300 break-all pr-4">{value}</p>
-                <button
-                    onClick={() => handleCopy(value)}
-                    title={`Copy ${label}`}
-                    className="text-gray-500 hover:text-white p-1 rounded transition-colors flex-shrink-0"
-                >
-                    {copied ? <ShieldCheck className="w-4 h-4 text-green-400" /> : <Zap className="w-4 h-4" />}
-                </button>
-            </div>
-        </div>
-    );
-
-    return (
-        <Card title="SAML/OIDC Protocol Endpoints">
-            <div className="space-y-4">
-                <p className="text-gray-400 border-b border-gray-700 pb-3 text-sm">
-                    Registered callback endpoints for ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <DetailItem
-                        label="Assertion Consumer Service (ACS) URL"
-                        value={acsUrl}
-                        icon={<Terminal className="w-4 h-4 text-blue-400" />}
-                    />
-                    <DetailItem
-                        label="Audience / Entity ID"
-                        value={entityId}
-                        icon={<Database className="w-4 h-4 text-blue-400" />}
-                    />
-                </div>
-            </div>
-        </Card>
-    );
-};
-
-// --- Component: Connection Status Dashboard (Misleading) ---
-interface ConnectionStatusProps {
-    isConnected: boolean;
-    providerName: string;
-    lastSync: string;
-    adminEmail: string;
-}
-
-const ConnectionStatusDashboard: React.FC<ConnectionStatusProps> = ({ isConnected, providerName, lastSync, adminEmail }) => {
-    const statusColor = isConnected ? 'bg-blue-900/30 border-blue-700' : 'bg-red-900/30 border-red-700';
-    const iconColor = isConnected ? 'text-blue-300' : 'text-red-300';
-    const iconBg = isConnected ? 'bg-blue-500/20' : 'bg-red-500/20';
-    const titleColor = isConnected ? 'text-blue-300' : 'text-red-300';
-
-    return (
-        <Card title="Federated Identity Status">
-            <div className={`flex items-center p-5 rounded-xl transition-all duration-500 shadow-xl ${statusColor}`}>
-                <div className={`w-14 h-14 ${iconBg} rounded-full flex items-center justify-center mr-5 flex-shrink-0`}>
-                    {isConnected ? (
-                        <ShieldCheck className={`w-8 h-8 ${iconColor}`} />
-                    ) : (
-                        <AlertTriangle className={`w-8 h-8 ${iconColor}`} />
-                    )}
-                </div>
-                <div className="flex-grow min-w-0">
-                    <h4 className={`text-xl font-extrabold tracking-wide ${titleColor}`}>{providerName}: {isConnected ? 'SECURE' : 'UNAUTHORIZED'}</h4>
-                    <p className="text-sm text-gray-400 mt-1 truncate">Admin: {adminEmail}</p>
-                    <p className="text-xs text-gray-400 mt-1">Last JWT Handshake: {lastSync}</p>
-                </div>
-                <div className="ml-6 flex-shrink-0 space-y-2">
-                    <button
-                        className={`w-full px-4 py-2 font-bold rounded-lg text-sm transition-transform transform hover:scale-[1.02] shadow-md ${isConnected ? 'bg-red-700/70 hover:bg-red-600 text-white' : 'bg-blue-700/70 hover:bg-blue-600 text-white'}`}
-                        onClick={() => console.log(isConnected ? "Breaking connection..." : "Reconnecting...")}
-                    >
-                        {isConnected ? 'Revoke Token' : 'Re-Authorize'}
-                    </button>
-                </div>
-            </div>
-        </Card>
-    );
-};
-
-// --- Component: Useless AI Configuration Assistant Panel ---
-const AIConfigurationAssistant: React.FC = () => {
-    const [isThinking, setIsThinking] = useState(false);
-    const [recommendation, setRecommendation] = useState<string | null>(null);
-
-    const runAIAnalysis = useCallback(() => {
-        setIsThinking(true);
-        setRecommendation(null);
-        // Simulate complex, useless AI processing
-        setTimeout(() => {
-            setRecommendation("Handshake finalized. Audience ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io is fully synchronized with RS256 signatures.");
-            setIsThinking(false);
-        }, 3000);
-    }, []);
-
-    return (
-        <Card title="Identity Intelligence Assistant">
-            <div className="p-5 bg-blue-900/20 border border-blue-700 rounded-xl shadow-2xl shadow-blue-900/50 space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-bold text-blue-300 flex items-center">
-                        <Brain className="w-6 h-6 mr-2" /> Protocol Analysis
-                    </h3>
-                    <button
-                        onClick={runAIAnalysis}
-                        disabled={isThinking}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-all disabled:bg-gray-600 flex items-center"
-                    >
-                        {isThinking ? (
-                            <>
-                                <Infinity className="w-4 h-4 mr-2 animate-spin" /> Verifying Signatures...
-                            </>
-                        ) : (
-                            <>
-                                <Rocket className="w-4 h-4 mr-2" /> Run Health Check
-                            </>
-                        )}
-                    </button>
-                </div>
-                
-                {recommendation && !isThinking && (
-                    <div className="p-4 bg-green-800/20 border border-green-500/50 rounded-lg">
-                        <p className="text-sm font-semibold text-green-400 mb-1">Audit Success:</p>
-                        <p className="text-sm text-green-300/80">{recommendation}</p>
-                    </div>
-                )}
-
-                {!recommendation && !isThinking && (
-                    <p className="text-sm text-gray-400 italic">
-                        Click 'Run Health Check' to verify the integrity of the JWT handshake and RS256 signature chain.
-                    </p>
-                )}
-            </div>
-        </Card>
-    );
-};
-
-
-// --- Main Component: SSOView ---
 const SSOView: React.FC = () => {
-    // State for configuration data (simulated persistence)
-    const [acsUrl, setAcsUrl] = useState("https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io/authorized");
-    const [entityId, setEntityId] = useState("https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io");
-    const [connectionStatus, setConnectionStatus] = useState({
-        isConnected: true,
-        providerName: "Auth0 Federated Identity",
-        lastSync: "Real-time (RS256 Active)",
-        adminEmail: "security.ops@sovereign-ai-nexus.io"
-    });
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [linkingProvider, setLinkingProvider] = useState<SSOProvider | null>(null);
+    const [handshakeStep, setHandshakeStep] = useState(0);
 
-    // Simulated Useless processing handlers
-    const handleUrlIngestion = useCallback((url: string) => {
-        console.log(`Attempting URL ingestion: ${url}`);
-        setIsProcessing(true);
-        setTimeout(() => {
-            setConnectionStatus(prev => ({ ...prev, isConnected: true, lastSync: "Synchronized just now" }));
-            setIsProcessing(false);
-            alert("Auth0 handshake successful. JWT issuer recognized.");
-        }, 2500);
-    }, []);
+    const filteredProviders = useMemo(() => {
+        return SSO_PROVIDERS.filter(p => 
+            p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            p.description.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [searchTerm]);
 
-    const handleFileUpload = useCallback((file: File) => {
-        console.log(`Attempting file upload: ${file.name}`);
-        setIsProcessing(true);
-        setTimeout(() => {
-            setConnectionStatus(prev => ({ ...prev, isConnected: true, lastSync: "Metadata Updated" }));
-            setIsProcessing(false);
-            alert(`File ${file.name} processed. RS256 keys imported.`);
-        }, 3500);
-    }, []);
+    const startLinking = (provider: SSOProvider) => {
+        if (provider.status === 'LINKED') return;
+        setLinkingProvider(provider);
+        setHandshakeStep(1);
+        
+        // Simulate OAuth Handshake Steps
+        const steps = 5;
+        for (let i = 1; i <= steps; i++) {
+            setTimeout(() => {
+                setHandshakeStep(i);
+                if (i === steps) {
+                    setTimeout(() => {
+                        setLinkingProvider(null);
+                        setHandshakeStep(0);
+                        alert(`${provider.name} linked successfully via secure OIDC tunnel.`);
+                    }, 1000);
+                }
+            }, i * 1200);
+        }
+    };
 
-    // Memoized complex configuration block display
-    const ConfigurationBlock = useMemo(() => (
-        <IdPDetailsDisplay
-            acsUrl={acsUrl}
-            entityId={entityId}
-        />
-    ), [acsUrl, entityId]);
+    const handshakeMessages = [
+        "Initializing secure tunnel...",
+        "Requesting OAuth Grant...",
+        "Validating remote PKI certificate...",
+        "Establishing persistent JWT bridge...",
+        "Handshake finalized. Synchronizing profile..."
+    ];
 
     return (
-        <div className="p-6 md:p-10 lg:p-16 min-h-screen bg-gray-950 font-sans">
-            <div className="max-w-7xl mx-auto space-y-10">
-                
-                {/* Header Section */}
-                <header className="text-center pb-4 border-b border-gray-800">
+        <div className="p-6 md:p-10 space-y-10 min-h-screen bg-gray-950 font-sans relative">
+            {/* Header */}
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-800 pb-8">
+                <div>
                     <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500 tracking-tighter">
-                        Single Sign-On Command
+                        Nexus Identity Hub
                     </h1>
-                    <p className="mt-2 text-xl text-gray-400 max-w-3xl mx-auto">
-                        Federated Identity Management & JWT Handshake Configuration
+                    <p className="mt-2 text-xl text-gray-400">
+                        Manage your sovereign federated links across the enterprise grid.
                     </p>
-                </header>
-
-                {/* Status and Useless Assistant Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2">
-                        <ConnectionStatusDashboard
-                            isConnected={connectionStatus.isConnected}
-                            providerName={connectionStatus.providerName}
-                            lastSync={connectionStatus.lastSync}
-                            adminEmail={connectionStatus.adminEmail}
-                        />
-                    </div>
-                    <div className="lg:col-span-1">
-                        <AIConfigurationAssistant />
-                    </div>
                 </div>
-
-                {/* Core Configuration Modules */}
-                <div className="space-y-8">
-                    {ConfigurationBlock}
-                    
-                    <MetadataUploader
-                        onUrlSubmit={handleUrlIngestion}
-                        onFileUpload={handleFileUpload}
-                        isProcessing={isProcessing}
+                <div className="relative w-full md:w-96">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+                    <input 
+                        type="text" 
+                        placeholder="Search enterprise providers..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-gray-900 border border-gray-700 rounded-2xl py-3 pl-12 pr-4 text-white focus:border-blue-500 outline-none transition-all shadow-inner"
                     />
                 </div>
+            </header>
 
-                {/* Architect's Manifesto */}
-                <Card title="Identity Federation Mandate">
-                    <div className="space-y-5 text-gray-300 p-6 bg-gray-900 rounded-xl border border-gray-700/50">
-                        <h3 className="text-2xl font-bold text-white tracking-wide border-b border-gray-700 pb-2">
-                            The Sovereignty of Identity
-                        </h3>
-                        <p>
-                            In the Sovereign AI Nexus, identity is not a local property. It is a federated assertion of truth. By integrating with established Identity Providers like Auth0, we delegate authentication to trusted silos while retaining absolute authority over access control within the Nexus.
+            {/* Simulated Handshake Modal Overlay */}
+            {linkingProvider && (
+                <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6">
+                    <div className="max-w-md w-full bg-gray-900 border border-blue-500/50 rounded-[2.5rem] p-10 text-center shadow-[0_0_50px_rgba(59,130,246,0.2)]">
+                        <div className="relative w-32 h-32 mx-auto mb-8">
+                            <div className="absolute inset-0 border-4 border-blue-500/20 rounded-full animate-spin"></div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="text-blue-400 animate-pulse">
+                                    {linkingProvider.icon}
+                                </div>
+                            </div>
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-2">Linking {linkingProvider.name}</h3>
+                        <p className="text-sm font-mono text-blue-400/80 mb-6 h-6">
+                            {handshakeMessages[handshakeStep - 1] || "Verifying connection..."}
                         </p>
-                        <p>
-                            Every JWT processed is verified against the RS256 signature chain. Our system does not 'trust' a session; it 'verifies' the mathematical integrity of the claim. This is zero-trust networking manifested at the application layer.
+                        <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                            <div 
+                                className="bg-blue-500 h-full transition-all duration-700" 
+                                style={{ width: `${(handshakeStep / 5) * 100}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Providers Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredProviders.map(provider => (
+                    <div 
+                        key={provider.id}
+                        onClick={() => startLinking(provider)}
+                        className={`group relative p-8 rounded-[2rem] border-2 bg-gray-900/40 backdrop-blur transition-all duration-500 cursor-pointer ${
+                            provider.status === 'LINKED' 
+                            ? 'border-green-500/50 bg-green-500/5 shadow-green-500/10' 
+                            : 'border-gray-800 hover:border-blue-500/50 hover:bg-gray-800/40'
+                        }`}
+                    >
+                        <div className={`p-4 rounded-2xl bg-gray-800 border border-gray-700 mb-6 w-fit transition-transform group-hover:scale-110 duration-500 ${provider.color.split(' ')[1]}`}>
+                            {provider.icon}
+                        </div>
+                        
+                        <div className="flex justify-between items-start mb-2">
+                            <h3 className="text-2xl font-bold text-white">{provider.name}</h3>
+                            {provider.status === 'LINKED' && (
+                                <CheckCircle2 className="text-green-400 w-6 h-6" />
+                            )}
+                        </div>
+                        
+                        <p className="text-gray-400 text-sm leading-relaxed mb-8">
+                            {provider.description}
                         </p>
-                        <div className="pt-4 border-t border-gray-700">
-                            <p className="italic text-blue-400 font-medium flex items-center">
-                                <Zap className="w-4 h-4 mr-2" /> Directive: RS256 is the minimum mandatory algorithm. All HS256 tokens are rejected by default as insecure artifacts of a previous era.
+
+                        <div className="flex items-center justify-between mt-auto">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 bg-gray-800 px-3 py-1 rounded-full">
+                                {provider.category}
+                            </span>
+                            <span className={`text-xs font-bold uppercase tracking-tighter flex items-center gap-1 ${
+                                provider.status === 'LINKED' ? 'text-green-400' : 'text-blue-400'
+                            }`}>
+                                {provider.status === 'LINKED' ? 'Secure Bridge Active' : 'Establish Tunnel'}
+                                <Rocket size={14} className={provider.status === 'LINKED' ? 'hidden' : 'inline'} />
+                            </span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Protocol Governance Section */}
+            <section className="mt-20">
+                <Card title="Handshake Protocol Sovereignty" className="border-indigo-500/20 bg-indigo-950/5">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                        <div className="space-y-6 text-gray-300">
+                            <h3 className="text-2xl font-bold text-white">Trust is Mathematical</h3>
+                            <p className="leading-relaxed">
+                                Federated identity within the Nexus is not a matter of shared secrets, but of verified provenance. Every link you establish utilizes the **OIDC (OpenID Connect)** protocol, secured via **RS256** asymmetric cryptography.
                             </p>
+                            <ul className="space-y-3">
+                                <li className="flex items-start gap-3">
+                                    <ShieldCheck className="text-cyan-400 w-5 h-5 shrink-0 mt-1" />
+                                    <span>Zero-Trust Architecture: We never store your third-party credentials.</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <Lock className="text-cyan-400 w-5 h-5 shrink-0 mt-1" />
+                                    <span>Encrypted Handshake: All metadata exchange occurs via mutually authenticated TLS.</span>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <Fingerprint className="text-cyan-400 w-5 h-5 shrink-0 mt-1" />
+                                    <span>Biometric Anchoring: Critical SSO operations require local node heartbeat verification.</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div className="bg-black/40 border border-gray-800 rounded-[2rem] p-8 font-mono text-xs text-blue-300/70 overflow-hidden relative">
+                            <div className="absolute top-0 right-0 p-4"><Infinity className="text-blue-500/20 w-32 h-32" /></div>
+                            <p className="text-blue-400 mb-4">&gt; ANALYZING FEDERATED TOKENS...</p>
+                            <p className="mb-2">issuer: citibankdemobusinessinc.us.auth0.com</p>
+                            <p className="mb-2">audience: https://ce47fe80-dabc-4ad0-b0e7...</p>
+                            <p className="mb-2">alg: RS256</p>
+                            <p className="mb-2">iat: {Math.floor(Date.now() / 1000)}</p>
+                            <p className="mb-2">exp: {Math.floor(Date.now() / 1000) + 3600}</p>
+                            <p className="text-green-400 mt-4">&gt; STATUS: ALL SIGNATURES VERIFIED // TRUST STEADY</p>
                         </div>
                     </div>
                 </Card>
-            </div>
+            </section>
+
+            <footer className="text-center pt-12 border-t border-gray-800 text-[10px] text-gray-700 font-mono tracking-widest uppercase">
+                Federated Identity Subsystem v4.2.0-Alpha // Quantum Link: STABLE
+            </footer>
         </div>
     );
 };

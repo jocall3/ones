@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Book, Users, Globe, Shield, Activity, Brain, 
@@ -15,10 +15,28 @@ type Tab = 'MISSION' | 'ACADEMY' | 'PLATFORM' | 'MANIFESTO';
 
 const LandingPage: React.FC<{ onLoginClick?: () => void }> = ({ onLoginClick }) => {
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isLoading } = useAuth();
     const [activeTab, setActiveTab] = useState<Tab>('MISSION');
 
+    // Automatically redirect to dashboard if already logged in
+    useEffect(() => {
+        if (!isLoading && isAuthenticated) {
+            navigate('/dashboard');
+        }
+    }, [isAuthenticated, isLoading, navigate]);
+
     const handleJoin = () => onLoginClick ? onLoginClick() : navigate('/login');
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
+                    <p className="text-cyan-500 font-mono text-xs animate-pulse">VERIFYING NEURAL LINK...</p>
+                </div>
+            </div>
+        );
+    }
 
     const renderContent = () => {
         switch(activeTab) {
@@ -194,7 +212,7 @@ const LandingPage: React.FC<{ onLoginClick?: () => void }> = ({ onLoginClick }) 
 
             {/* Footer */}
             <footer className="border-t border-gray-800 bg-black py-12 px-6">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+                <div className="max-w-7xl auto grid grid-cols-1 md:grid-cols-4 gap-12">
                     <div className="col-span-2">
                         <h4 className="text-2xl font-bold text-white mb-4">Infinite Intelligence Foundation</h4>
                         <p className="text-gray-500 max-w-sm">

@@ -15,7 +15,6 @@ export type ExternalBalanceSubType1Code = 'XPCD' | 'ITAV';
 export type ExternalBalanceType1Code = 'CLAV' | 'OPAV';
 export type ExternalBankTransactionDomain1Code = 'PMNT' | 'CAMT';
 export type ExternalBankTransactionFamily1Code = 'RCDT' | 'ICDT';
-// FIX: Removed duplicate identifier 'ExternalBankTransactionSubFamily1Code'
 export type ExternalBankTransactionSubFamily1Code = 'ESCT' | 'MOCR';
 export type ExternalBenchmarkCurveName1Code = 'LIBOR' | 'EURIBOR';
 export type ExternalBillingBalanceType1Code = 'CRDT' | 'DBIT';
@@ -146,6 +145,7 @@ export type ExternalTradeTransactionCondition1Code = 'BCPD';
 export type ExternalTypeOfParty1Code = 'ALIA';
 export type ExternalUnableToApplyIncorrectData1Code = 'IN01';
 export type ExternalUnableToApplyMissingData1Code = 'MS01';
+// FIX: Removed duplicate type definition for ExternalUnderlyingTradeTransactionType1Code
 export type ExternalUnderlyingTradeTransactionType1Code = 'COMM';
 export type ExternalUndertakingAmountType1Code = 'ORIG';
 export type ExternalUndertakingDocumentType1Code = 'COOL';

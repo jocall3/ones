@@ -3,13 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Demo Bank</title>
+    <title>Sovereign AI Banking Nexus</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+    <link rel="stylesheet" href="/index.css">
 
     <script type="importmap">
 {
@@ -98,17 +97,34 @@
     "react-simple-maps": "https://esm.sh/react-simple-maps@^3.0.0",
     "react-router": "https://esm.sh/react-router@^7.10.1",
     "react-leaflet": "https://esm.sh/react-leaflet@^5.0.0",
-    "leaflet": "https://esm.sh/leaflet@^1.9.4"
+    "leaflet": "https://esm.sh/leaflet@^1.9.4",
+    "@auth0/auth0-react": "https://aistudiocdn.com/@auth0/auth0-react@^2.2.4",
+    "express-oauth2-jwt-bearer": "https://aistudiocdn.com/express-oauth2-jwt-bearer@^1.6.0"
   }
 }
 </script>
-  <link rel="stylesheet" href="/index.css">
-</head>
+  </head>
 
-  <body class="bg-gray-900">
-    <div id="root"></div>
+  <body>
+    <div class="app-container">
+      <!-- Initial Splash Screen / Loading State -->
+      <div id="loading" class="loading-state">
+        <div class="loading-text">Synchronizing with Quantum Core...</div>
+      </div>
 
-    <!-- No API key, nothing injected, nothing global -->
+      <!-- Static Error Catch -->
+      <div id="error" class="error-state" style="display: none;">
+        <div class="error-title">Oops!</div>
+        <div class="error-message">Nexus Handshake Interrupted</div>
+        <div id="error-details" class="error-sub-message"></div>
+      </div>
+
+      <!-- React Mount Point -->
+      <div id="root" class="main-card-wrapper" style="display: none;">
+          <!-- React will render here -->
+      </div>
+    </div>
+
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

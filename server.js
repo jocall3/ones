@@ -1,12 +1,30 @@
+
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { auth } from 'express-oauth2-jwt-bearer';
 
 const app = express();
 const PORT = process.env.PORT || 7860;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Authorization middleware. When used, the Access Token must
+// exist and be verified against the Auth0 JSON Web Key Set.
+const jwtCheck = auth({
+  audience: 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io',
+  issuerBaseURL: 'https://citibankdemobusinessinc.us.auth0.com/',
+  tokenSigningAlg: 'RS256'
+});
+
+// Enforce on API routes (example pattern)
+app.use('/api', jwtCheck);
+
+// Protected endpoint
+app.get('/api/authorized', (req, res) => {
+    res.json({ message: 'Secured Resource Accessed Successfully' });
+});
 
 // Serve static files from the 'dist' directory
 app.use(express.static(path.join(__dirname, 'dist')));

@@ -1,7 +1,9 @@
 {
-  "name": "Copy of Copy of DonOneAiBankingConsortium",
-  "description": "A next-generation banking dashboard for Demo Bank, providing AI-driven insights and advanced financial management tools for personal and corporate clients.",
+  "name": "Sovereign AI Banking Nexus",
+  "description": "A next-generation banking dashboard providing AI-driven insights and advanced financial management tools for personal and corporate clients.",
   "requestFramePermissions": [
-    "camera"
+    "camera",
+    "microphone",
+    "geolocation"
   ]
 }
