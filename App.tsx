@@ -16,7 +16,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import { View } from './types';
 
-// --- ALL VIEW COMPONENTS ---
+// Views
 import AccountDetails from './components/AccountDetails';
 import AccountList from './components/AccountList';
 import AccountsDashboardView from './components/AccountsDashboardView';
@@ -53,7 +53,6 @@ import CitibankStandingInstructionsView from './components/CitibankStandingInstr
 import CitibankUnmaskedDataView from './components/CitibankUnmaskedDataView';
 import CommoditiesExchange from './components/CommoditiesExchange';
 import ComplianceAlertCard from './components/ComplianceAlertCard';
-/* FIX: Changed ComplianceOracleView to default import */
 import ComplianceOracleView from './components/ComplianceOracleView';
 import ConciergeService from './components/ConciergeService';
 import ConductorConfigurationView from './components/ConductorConfigurationView';
@@ -184,20 +183,32 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 const SAppLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const dataContext = useContext(DataContext);
-  const { isAuthenticated, isLoading: authLoading } = useContext(AuthContext)!;
+  const authContext = useContext(AuthContext);
 
-  if (!dataContext) {
-    return <div>Error: DataContext not found.</div>;
+  useEffect(() => {
+    // Forcefully remove the index.html loading splash when React is taking control
+    const loadingElement = document.getElementById('loading');
+    const rootElement = document.getElementById('root');
+    if (loadingElement) loadingElement.style.display = 'none';
+    if (rootElement) rootElement.style.display = 'flex';
+  }, []);
+
+  if (!dataContext || !authContext) {
+    return <div>Critical Error: Context Providers not found.</div>;
   }
 
+  const { isAuthenticated, isLoading: authLoading } = authContext;
   const { isLoading: dataLoading, error, activeView, setActiveView } = dataContext;
 
-  if (authLoading || dataLoading) {
+  // If Auth0 is checking session, or if we are authenticated and waiting for data
+  const showSyncScreen = authLoading || (isAuthenticated && dataLoading);
+
+  if (showSyncScreen) {
     return (
         <div className="h-screen w-screen flex flex-col items-center justify-center bg-gray-950 text-white gap-4">
             <Cpu className="w-16 h-16 text-cyan-400 animate-pulse" />
             <h1 className="text-2xl font-bold tracking-wider uppercase font-mono">Synchronizing with Quantum Core...</h1>
-            <p className="text-gray-400 font-mono text-sm">Validating Handshake Protocol...</p>
+            <p className="text-gray-400 font-mono text-sm">{authLoading ? 'Validating Handshake Protocol...' : 'Reconstituting Financial Universe...'}</p>
             <div className="w-64 h-2 bg-gray-800 rounded-full overflow-hidden mt-2 text-center">
                 <div className="h-2 bg-gradient-to-r from-cyan-500 to-purple-500 animate-progress-flow"></div>
             </div>
@@ -229,13 +240,9 @@ const SAppLayout = () => {
 
   return (
     <div className="flex h-screen bg-gray-900 text-white overflow-hidden font-sans">
-      <Sidebar 
-        isOpen={isSidebarOpen} 
-        setIsOpen={setIsSidebarOpen} 
-      />
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <div className="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
-        
         <main className="w-full flex-grow p-6">
             {activeView === View.Dashboard && <Dashboard />}
             {activeView === View.Transactions && <TransactionsView />}
@@ -286,17 +293,14 @@ const SAppLayout = () => {
             {activeView === View.GlobalSsiHub && <GlobalSsiHubView />}
             {activeView === View.Security && <SecurityView />}
             {activeView === View.VentureCapitalDeskView && <VentureCapitalDeskView />}
-
             {activeView === View.CustomerDashboard && <CustomerDashboard />}
             {activeView === View.VerificationReports && <VerificationReportsView customerId="cust_1" />}
             {activeView === View.FinancialReporting && <FinancialReportingView />}
             {activeView === View.StripeNexusDashboard && <StripeNexusDashboard />}
-            
             {activeView === View.TheBook && <TheBookView />}
             {activeView === View.KnowledgeBase && <KnowledgeBaseView />}
         </main>
       </div>
-      
       <VoiceControl setActiveView={setActiveView} />
     </div>
   );
@@ -304,9 +308,10 @@ const SAppLayout = () => {
 
 const theme = createTheme({ palette: { mode: 'dark' } });
 
-// --- Protected Route Helper ---
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
-    const { isAuthenticated, isLoading } = useContext(AuthContext)!;
+    const auth = useContext(AuthContext);
+    if (!auth) return null;
+    const { isAuthenticated, isLoading } = auth;
     if (isLoading) return null;
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
@@ -314,7 +319,6 @@ const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
     return <>{children}</>;
 };
 
-// --- Main App Component ---
 function App() {
   return (
     <Auth0Provider
@@ -339,16 +343,10 @@ function App() {
                         <Route path="/" element={<LandingPage />} />
                         <Route path="/login" element={<LoginView />} />
                         <Route path="/sso" element={<SSOView />} />
-                        
-                        {/* Protected Routes Wrapper */}
-                        <Route element={
-                            <ProtectedRoute>
-                                <SAppLayout />
-                            </ProtectedRoute>
-                        }>
-                        <Route index element={<Dashboard />} />
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="*" element={<Dashboard />} />
+                        <Route element={<ProtectedRoute><SAppLayout /></ProtectedRoute>}>
+                            <Route index element={<Dashboard />} />
+                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="*" element={<Dashboard />} />
                         </Route>
                     </Routes>
                     </Router>

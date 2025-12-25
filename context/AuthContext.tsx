@@ -43,7 +43,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const [accessToken, setAccessToken] = useState<string | null>(null);
 
-    // Effect to automatically acquire tokens and refresh them via Rotation
     useEffect(() => {
         const getToken = async () => {
             if (isAuthenticated) {
@@ -68,7 +67,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         email: auth0User.email || '',
         roles: ['VISIONARY', 'ADMIN'],
         securityLevel: 'ARCHITECT_LEVEL',
-        netWorth: 125000000000, // Simulated $125B node
+        netWorth: 125000000000,
     } : null;
 
     const loginWithCredentials = async () => {
@@ -84,7 +83,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const loginWithSSO = async () => {
         await loginWithRedirect({
             authorizationParams: {
-                connection: 'citi-connect-enterprise' // Simulated enterprise connection
+                connection: 'citi-connect-enterprise'
             }
         });
     };

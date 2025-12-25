@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useContext } from 'react';
 import { AuthContext } from './AuthContext';
 import { 
@@ -17,16 +16,12 @@ interface DataContextType {
     error: string | null;
     activeView: View;
     setActiveView: (view: View) => void;
-    
-    // Core Entities
     transactions: Transaction[];
     assets: Asset[];
     budgets: BudgetCategory[];
     financialGoals: FinancialGoal[];
     notifications: Notification[];
     marketplaceProducts: MarketplaceProduct[];
-    
-    // System & API Config
     apiStatus: APIStatus[];
     geminiApiKey: string | null;
     setGeminiApiKey: (key: string) => void;
@@ -39,8 +34,6 @@ interface DataContextType {
     marqetaApiToken: string | null;
     marqetaApiSecret: string | null;
     setMarqetaCredentials: (token: string, secret: string) => void;
-    
-    // Dashboard & Metrics
     linkedAccounts: LinkedAccount[];
     upcomingBills: UpcomingBill[];
     marketMovers: MarketMover[];
@@ -48,15 +41,11 @@ interface DataContextType {
     creditFactors: CreditFactor[];
     rewardPoints: RewardPoints;
     impactData: { treesPlanted: number; progressToNextTree: number };
-    
-    // Database & Automation
     dbConfig: DatabaseConfig;
     updateDbConfig: (config: Partial<DatabaseConfig>) => void;
     connectDatabase: () => void;
     webDriverStatus: WebDriverStatus;
     launchWebDriver: (task: string) => void;
-    
-    // Enterprise Operations
     paymentOrders: PaymentOrder[];
     invoices: Invoice[];
     complianceCases: ComplianceCase[];
@@ -65,14 +54,10 @@ interface DataContextType {
     marqetaCardProducts: MarqetaCardProduct[];
     isMarqetaLoading: boolean;
     fetchMarqetaProducts: () => void;
-    
-    // AI & System Interaction
     askSovereignAI: (prompt: string) => Promise<string>;
     broadcastEvent: (type: string, data: any) => void;
     markNotificationRead: (id: string) => void;
     showSystemAlert: (message: string, type: any) => void;
-    
-    // Budget & Goals Management
     addBudget: (name: string, limit: number) => void;
     addFinancialGoal: (goal: any) => void;
     generateGoalPlan: (id: string) => Promise<void>;
@@ -83,8 +68,6 @@ interface DataContextType {
     updateFinancialGoal: (id: string, updates: any) => void;
     linkGoals: (s: string, t: string, type: any, amount?: number) => void;
     unlinkGoals: (s: string, t: string) => void;
-    
-    // API Actions
     addTransaction: (tx: Transaction) => Promise<void>;
     rebalancePortfolio: (portfolioId: string, targetRisk: string) => Promise<any>;
     runAdvancedSimulation: (params: any) => Promise<any>;
@@ -92,8 +75,6 @@ interface DataContextType {
     generateAdVideo: (prompt: string) => Promise<any>;
     updateCardControls: (cardId: string, controls: any) => Promise<void>;
     redeemMarketplaceOffer: (offerId: string) => Promise<any>;
-    
-    // Crypto & Web3
     cryptoAssets: CryptoAsset[];
     walletInfo: any;
     virtualCard: VirtualCard | null;
@@ -103,8 +84,6 @@ interface DataContextType {
     issueCard: () => void;
     buyCrypto: (a: number, c: string) => void;
     nftAssets: NFTAsset[];
-    
-    // Security & Compliance
     unlinkAccount: (id: string) => void;
     handlePlaidSuccess: (t: string, m: any) => void;
     securityMetrics: SecurityScoreMetric[];
@@ -130,7 +109,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Dynamic State Holders
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [assets, setAssets] = useState<Asset[]>([]);
     const [budgets, setBudgets] = useState<BudgetCategory[]>([]);
@@ -143,14 +121,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [corporateTransactions, setCorporateTransactions] = useState<CorporateTransaction[]>([]);
     const [corporateCards, setCorporateCards] = useState<any[]>([]);
     
-    // Config State
     const [geminiApiKey, setGeminiApiKey] = useState<string | null>(process.env.API_KEY || null);
     const [mtApiKey, setMtApiKey] = useState<string | null>(null);
     const [mtOrgId, setMtOrgId] = useState<string | null>(null);
     const [marqetaToken, setMarqetaToken] = useState<string | null>(null);
     const [marqetaSecret, setMarqetaSecret] = useState<string | null>(null);
     
-    // Mocked/Default Data for Complex Views (until API connected)
     const [impactData] = useState({ treesPlanted: 1245, progressToNextTree: 72 });
     const [creditScore] = useState<CreditScore>({ score: 780, change: 5, rating: 'Excellent' });
     const [rewardPoints] = useState<RewardPoints>({ balance: 85250, lastEarned: 320, lastRedeemed: 5000, currency: 'Points' });
@@ -169,7 +145,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const callApi = useCallback(async (path: string, options: RequestInit = {}) => {
         if (!accessToken) return null;
-        
         const response = await fetch(`${API_BASE_URL}${path}`, {
             ...options,
             headers: {
@@ -178,17 +153,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 'Content-Type': 'application/json'
             }
         });
-
         if (!response.ok) {
             const errData = await response.json().catch(() => ({}));
             throw new Error(errData.message || `API Error: ${response.status}`);
         }
-
         return response.json();
     }, [accessToken]);
 
     const fetchData = useCallback(async () => {
-        if (!isAuthenticated || !accessToken) return;
+        if (!isAuthenticated || !accessToken) {
+            setIsLoading(false); // Ensure loading is false if not authenticated
+            return;
+        }
         
         setIsLoading(true);
         setError(null);
@@ -219,7 +195,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         fetchData();
     }, [fetchData]);
 
-    // Implementation of exhausive set of required methods
     const addTransaction = async (tx: Transaction) => {
         await callApi('/transactions', { method: 'POST', body: JSON.stringify(tx) });
         await fetchData();
