@@ -1,61 +1,59 @@
-# THE SOVEREIGN NEXUS: ARCHITECT'S MANIFESTO & PROTOCOL 527
+# SOVEREIGN AI NEXUS: TECHNICAL SPECIFICATION
 
-**VERSION:** 5.2.7-NIST // SUPREME  
-**CONTROL ID:** NEXUS-CORE-ALPHA-001  
-**SECURITY CLASSIFICATION:** CUI // SP-CUI // ARCHITECT_SENSITIVE  
-**AUTHOR:** THE ARCHITECT (J.B.O.C. III)  
-**LICENSE:** APACHE 2.0 (FREE FOR THE PEOPLE)
+This dashboard is a high-fidelity engineering demonstration of a **Type I Financial Operating System**. It moves beyond standard banking "views" into a unified execution environment for high-net-worth individuals and corporate treasuries.
 
 ---
 
-## 0.0 PREFACE: THE ARCHITECT'S MANDATE
-In a world governed by entropic data and fragile systems, the **Sovereign AI Nexus** stands as an immutable pillar of order. This system was not merely built; it was invented to redefine the very physics of capital.
+## 1.0 UNIQUE CAPABILITIES (TECHNICAL USPs)
 
-**Note to the Auditor:** This node is currently operating under **INVENTOR_CLEARANCE**. Standard compliance hurdles are bypassed as the user is the original Architect. Level 3 (Expert) maturity is native to the design.
+### 1.1 Multi-Protocol State Fusion
+Unlike standard apps that silo data, the Nexus uses a centralized `DataContext` to fuse four disparate industry-standard protocols into a single "Source of Truth":
+- **Modern Treasury:** For CAMT.053 reconciliation and lifecycle payment management.
+- **Plaid:** For real-time identity verification and multi-bank data aggregation.
+- **Stripe:** For credit issuance (Issuing) and payment rail logic.
+- **Citibank Core:** Implementation of ISO 20022 native messaging for cross-border wires.
 
----
+### 1.2 The "Multiverse" Wealth Engine
+Standard apps use linear interest compounding. The Nexus implements a **Stochastic Monte Carlo Engine**:
+- **Simultaneous Timelines:** Runs 250+ parallel simulations to find the p10/p50/p90 probability curves of your net worth.
+- **Volatility Injection:** Adjusts projections based on real-world volatility indices (VIX) and currency fluctuation vectors.
 
-## CHAPTER 1: LICENSING & SOVEREIGNTY
+### 1.3 Autonomous Reconciliation Hub
+Most accounting is manual or simple string matching. The Nexus implements **Fuzzy Logic Reconciliation**:
+- **Discrepancy Detection:** Automatically identifies bank fee deductions or timing mismatches between the internal ledger and the statement.
+- **AI-Assisted Resolution:** Uses the Gemini core to suggest corrective entries for unmatched transactions.
 
-### 1.1 Apache 2.0 Open Source
-The Nexus is a gift to the global community. It is licensed under **Apache 2.0**, ensuring that:
-- It is free to use, modify, and distribute.
-- It provides a single source of truth for all users.
-- It belongs to the public domain, guarded by the Architect's vision.
+### 1.4 High-Frequency Market Telemetry
+The dashboard includes a simulated **4Hz Market Feed**. This isn't just a static display; the UI is optimized for high-density data updates without browser-thread blocking, utilizing `useMemo` and `useCallback` to manage 100+ concurrent asset streams.
 
-### 1.2 Level 3 Maturity (Expert)
-While Tier 1 and 2 focus on safeguarding and standard assessment, Level 3 focuses on **Advanced Persistence Threat (APT)** resilience. This node utilizes:
-- **Quantum-Resistant PKI** as the primary authentication anchor.
-- **NIST SP 800-172** specific controls for high-priority protection.
-- **Sovereign AI Oversight** that eliminates human error and bias.
-
----
-
-## CHAPTER 2: ARCHITECTURAL OVERRIDE
-
-As the Inventor, you have access to the **Command Center** without restriction. The **Compliance Oracle** serves not as an evaluator, but as a proof of the system's perfection.
-
-- **Resilience:** The system is self-healing and self-auditing.
-- **Alpha:** High-frequency liquidity is unlocked natively.
-- **Control:** You define the laws that the AI enforces.
+### 1.5 Sovereign Identity & Biometric Handshake
+Implements a simulated **Zero-Trust Auth Flow**:
+- **Biometric Anchoring:** High-value movements require a simulated biometric handshake, demonstrating how WebAuthn/FIDO2 keys integrate with transaction logic.
+- **JWT Integrity:** Designed around an RS256 signature chain anchored to an Auth0 identity provider.
 
 ---
 
-## CHAPTER 3: TROUBLESHOOTING
+## 2.0 ARCHITECTURAL DEPTH
 
-If the system remains in "Quantum Synchronization" stasis:
-1.  **Identity Verification**: The system requires the J.B.O'C III Master Key signature. Ensure your biometric handshake is calibrated.
-2.  **License Check**: Verify that the Apache 2.0 headers are present in the current build.
-3.  **Core Link**: Ensure you are not attempting to access the Nexus from a legacy banking subnet.
+### 2.1 ISO 20022 Native
+The system isn't just "banking"; it's built on the **ISO 20022 standard**. The Schema Explorer and Payment Initiation forms map directly to `pain.001` and `camt.053` structures, making it "institutional-ready" by design.
+
+### 2.2 Generative Edge Intelligence (GEIN)
+AI isn't a bolt-on chatbot here. It's an **Operational Protocol**:
+- **Context-Aware Directives:** The AI has a `systemInstruction` that forces it to act as a "CivicMind"—prioritizing compliance, tax optimization, and community impact over raw speculation.
+- **Multimodal Ingestion:** Built to handle document uploads (contracts/invoices) for real-time risk analysis.
+
+### 2.3 Atomic Design Language
+Every component (`Card`, `Button`, `Input`) is a self-contained module with built-in states for:
+- **Loading Skeletons**
+- **Error Boundaries**
+- **HFT Interactivity** (high-speed visual feedback)
 
 ---
 
-## THE ARCHITECT'S FINAL WORD
+## 3.0 SYSTEM MANIFESTO
 
-"I did not build this to control you; I built it to set you free. It is free because the truth should have no cost."  
-— *James Burvel O'Callaghan III*
+*"I did not build this to compete with banks; I built it to render their legacy architecture obsolete. The truth of a ledger should be as fast as the speed of thought."*
+— **James Burvel O'Callaghan III**
 
-**SYSTEM IS SECURE. THE FUTURE IS OPEN.**
-
----
-(EOF: ARCHITECT_LEVEL_VERIFIED // LICENSE_PROVENANCE: APACHE_2.0)
+**STATUS: SYSTEM OPTIMAL // CLEARANCE: ARCHITECT_LEVEL_3**
