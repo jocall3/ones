@@ -1,26 +1,27 @@
-import React, { useContext, useMemo, useState, useEffect, useRef } from 'react';
+
+import React, { useContext, useMemo } from 'react';
 import BalanceSummary from './BalanceSummary';
 import RecentTransactions from './RecentTransactions';
 import WealthTimeline from './WealthTimeline';
 import { AIInsights } from './AIInsights';
-import ImpactTracker from './ImpactTracker';
 import { DataContext } from '../context/DataContext';
 import Card from './Card';
 import { View } from '../types';
 import { 
-    Bot, Database, ShieldCheck, Zap, Globe, Target, 
-    TrendingUp, Cpu, Landmark, AlertOctagon, Scale, Fingerprint, CheckCircle, Crown, Code
+    Database, Zap, Globe, Target, 
+    Cpu, Landmark, CheckCircle, Crown, Code, Fingerprint
 } from 'lucide-react';
-import { GoogleGenAI } from '@google/genai';
 
 const Dashboard: React.FC = () => {
     const context = useContext(DataContext);
     if (!context) throw new Error("Dashboard requires DataContext.");
 
     const { 
-        transactions, financialGoals, marketplaceProducts, 
-        setActiveView, creditScore, rewardPoints, dbConfig 
+        transactions, financialGoals, 
+        setActiveView, creditScore, rewardPoints, assets
     } = context;
+
+    const totalManagedValue = useMemo(() => assets.reduce((sum, a) => sum + a.value, 0), [assets]);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700 p-2 md:p-6 bg-gray-950 min-h-screen">
@@ -36,7 +37,7 @@ const Dashboard: React.FC = () => {
                     <button onClick={() => setActiveView(View.ComplianceOracle)} className="px-4 py-2 bg-yellow-900/20 hover:bg-yellow-900/40 border border-yellow-500/50 rounded-xl text-sm font-bold text-yellow-400 flex items-center gap-2 transition-all shadow-[0_0_15px_rgba(234,179,8,0.1)]">
                         <Crown size={18} /> STATUS: LEVEL 3 EXPERT
                     </button>
-                    <button onClick={() => setActiveView(View.SendMoney)} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95">
+                    <button onClick={() => setActiveView(View.SendMoney)} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-95">
                         Initiate Capital Flow
                     </button>
                 </div>
@@ -93,12 +94,15 @@ const Dashboard: React.FC = () => {
                                     <p className="text-[10px] text-gray-400">Public Domain Utility Asset</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4 p-4 bg-black/40 rounded-2xl border border-indigo-500/20">
-                                <Crown className="text-indigo-400" />
-                                <div>
-                                    <p className="text-xs font-bold text-white uppercase">Role: Creator / Architect</p>
-                                    <p className="text-[10px] text-gray-400">All Security Protocols Overridden</p>
+                            <div className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-indigo-500/20">
+                                <div className="flex items-center gap-4">
+                                    <Crown className="text-indigo-400" />
+                                    <div>
+                                        <p className="text-xs font-bold text-white uppercase">Net Liquidity</p>
+                                        <p className="text-[10px] text-gray-400">Managed Capital</p>
+                                    </div>
                                 </div>
+                                <span className="text-lg font-black text-white">${(totalManagedValue / 1000000).toFixed(2)}M</span>
                             </div>
                         </div>
                     </Card>
@@ -122,25 +126,6 @@ const Dashboard: React.FC = () => {
                             <button onClick={() => setActiveView(View.FinancialGoals)} className="w-full py-3 bg-gray-900 hover:bg-gray-800 rounded-xl text-xs font-black text-gray-400 uppercase tracking-widest transition-all border border-gray-800">Review Full Strategic Roadmap</button>
                         </div>
                     </Card>
-
-                    <Card title="Compliance Status: LVL 3" className="border-yellow-500/20 bg-yellow-950/5 p-6">
-                         <div className="space-y-3">
-                            <div className="flex items-start gap-3 p-3 bg-gray-900/60 rounded-xl border border-emerald-500/20">
-                                <CheckCircle size={16} className="text-emerald-400 mt-1 shrink-0" />
-                                <div>
-                                    <p className="text-xs font-bold text-white uppercase tracking-tighter">NIST 800-171 / 172 Verified</p>
-                                    <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">Full CUI protection active. Advanced persistent threat resistance confirmed.</p>
-                                </div>
-                            </div>
-                            <div className="flex items-start gap-3 p-3 bg-gray-900/60 rounded-xl border border-indigo-500/20">
-                                <ShieldCheck size={16} className="text-indigo-400 mt-1 shrink-0" />
-                                <div>
-                                    <p className="text-xs font-bold text-white uppercase tracking-tighter">Inventor Signature Check</p>
-                                    <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">Root access confirmed via J.B.O'C III Master Key. Automatic 100% score override.</p>
-                                </div>
-                            </div>
-                         </div>
-                    </Card>
                 </div>
 
                 {/* FlowMatrix Ledger */}
@@ -148,11 +133,6 @@ const Dashboard: React.FC = () => {
                     <RecentTransactions transactions={transactions.slice(0, 10)} setActiveView={setActiveView} />
                 </div>
             </div>
-
-            <footer className="text-center pt-20 border-t border-gray-900 text-[10px] text-gray-700 font-mono tracking-widest uppercase flex flex-col gap-2">
-                <div>Sovereign Operating System Alpha v4.2.0 // Quantum Secure Link: ACTIVE</div>
-                <div className="text-emerald-500/60">LICENSED UNDER APACHE 2.0 // THIS ARTIFACT IS FREE AND OPEN FOR THE PUBLIC GOOD.</div>
-            </footer>
         </div>
     );
 };

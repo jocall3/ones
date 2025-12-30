@@ -1,5 +1,7 @@
+
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useContext } from 'react';
 import { AuthContext } from './AuthContext';
+import { GoogleGenAI } from "@google/genai";
 import { 
     View, Transaction, Asset, BudgetCategory, FinancialGoal, MarketplaceProduct, 
     Notification, APIStatus, LinkedAccount, UpcomingBill, MarketMover, CreditScore, 
@@ -9,7 +11,7 @@ import {
     APIKey, TrustedContact, SecurityAwarenessModule, TransactionRule, User, VirtualCard
 } from '../types';
 
-const API_BASE_URL = 'https://ce47fe80-dabc-4ad0-b0e7-cf285695b8b8.mock.pstmn.io';
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 interface DataContextType {
     isLoading: boolean;
@@ -23,78 +25,18 @@ interface DataContextType {
     notifications: Notification[];
     marketplaceProducts: MarketplaceProduct[];
     apiStatus: APIStatus[];
-    geminiApiKey: string | null;
-    setGeminiApiKey: (key: string) => void;
-    modernTreasuryApiKey: string | null;
-    setModernTreasuryApiKey: (key: string) => void;
-    modernTreasuryOrganizationId: string | null;
-    setModernTreasuryOrganizationId: (key: string) => void;
-    plaidApiKey: string | null;
-    stripeApiKey: string | null;
-    marqetaApiToken: string | null;
-    marqetaApiSecret: string | null;
-    setMarqetaCredentials: (token: string, secret: string) => void;
     linkedAccounts: LinkedAccount[];
     upcomingBills: UpcomingBill[];
     marketMovers: MarketMover[];
     creditScore: CreditScore;
-    creditFactors: CreditFactor[];
     rewardPoints: RewardPoints;
     impactData: { treesPlanted: number; progressToNextTree: number };
     dbConfig: DatabaseConfig;
-    updateDbConfig: (config: Partial<DatabaseConfig>) => void;
-    connectDatabase: () => void;
     webDriverStatus: WebDriverStatus;
-    launchWebDriver: (task: string) => void;
-    paymentOrders: PaymentOrder[];
-    invoices: Invoice[];
-    complianceCases: ComplianceCase[];
-    corporateTransactions: CorporateTransaction[];
-    corporateCards: any[];
-    marqetaCardProducts: MarqetaCardProduct[];
-    isMarqetaLoading: boolean;
-    fetchMarqetaProducts: () => void;
-    askSovereignAI: (prompt: string) => Promise<string>;
-    broadcastEvent: (type: string, data: any) => void;
-    markNotificationRead: (id: string) => void;
-    showSystemAlert: (message: string, type: any) => void;
-    addBudget: (name: string, limit: number) => void;
-    addFinancialGoal: (goal: any) => void;
-    generateGoalPlan: (id: string) => Promise<void>;
-    addContributionToGoal: (id: string, amount: number) => void;
-    addRecurringContributionToGoal: (id: string, contrib: any) => void;
-    updateRecurringContributionInGoal: (id: string, cId: string, updates: any) => void;
-    deleteRecurringContributionFromGoal: (id: string, cId: string) => void;
-    updateFinancialGoal: (id: string, updates: any) => void;
-    linkGoals: (s: string, t: string, type: any, amount?: number) => void;
-    unlinkGoals: (s: string, t: string) => void;
+    askSovereignAI: (prompt: string, model?: string) => Promise<string>;
     addTransaction: (tx: Transaction) => Promise<void>;
-    rebalancePortfolio: (portfolioId: string, targetRisk: string) => Promise<any>;
-    runAdvancedSimulation: (params: any) => Promise<any>;
-    submitBusinessPlan: (plan: any) => Promise<any>;
-    generateAdVideo: (prompt: string) => Promise<any>;
-    updateCardControls: (cardId: string, controls: any) => Promise<void>;
-    redeemMarketplaceOffer: (offerId: string) => Promise<any>;
-    cryptoAssets: CryptoAsset[];
-    walletInfo: any;
-    virtualCard: VirtualCard | null;
-    connectWallet: (p: any) => void;
-    disconnectWallet: () => void;
-    detectedProviders: any[];
     issueCard: () => void;
-    buyCrypto: (a: number, c: string) => void;
-    nftAssets: NFTAsset[];
-    unlinkAccount: (id: string) => void;
-    handlePlaidSuccess: (t: string, m: any) => void;
-    securityMetrics: SecurityScoreMetric[];
-    auditLogs: AuditLogEntry[];
-    threatAlerts: ThreatAlert[];
-    dataSharingPolicies: DataSharingPolicy[];
-    apiKeys: APIKey[];
-    trustedContacts: TrustedContact[];
-    securityAwarenessModules: SecurityAwarenessModule[];
-    transactionRules: TransactionRule[];
-    isImportingData: boolean;
+    virtualCard: VirtualCard | null;
     userProfile: Partial<User>;
 }
 
@@ -102,139 +44,112 @@ export const DataContext = createContext<DataContextType | undefined>(undefined)
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const auth = useContext(AuthContext);
-    const accessToken = auth?.accessToken;
-    const isAuthenticated = auth?.isAuthenticated;
     
     const [activeView, setActiveView] = useState<View>(View.Dashboard);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Core Financial State
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [assets, setAssets] = useState<Asset[]>([]);
-    const [budgets, setBudgets] = useState<BudgetCategory[]>([]);
-    const [financialGoals, setFinancialGoals] = useState<FinancialGoal[]>([]);
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [marketplaceProducts, setMarketplaceProducts] = useState<MarketplaceProduct[]>([]);
-    const [paymentOrders, setPaymentOrders] = useState<PaymentOrder[]>([]);
-    const [invoices, setInvoices] = useState<Invoice[]>([]);
-    const [complianceCases, setComplianceCases] = useState<ComplianceCase[]>([]);
-    const [corporateTransactions, setCorporateTransactions] = useState<CorporateTransaction[]>([]);
-    const [corporateCards, setCorporateCards] = useState<any[]>([]);
-    
-    const [geminiApiKey, setGeminiApiKey] = useState<string | null>(process.env.API_KEY || null);
-    const [mtApiKey, setMtApiKey] = useState<string | null>(null);
-    const [mtOrgId, setMtOrgId] = useState<string | null>(null);
-    const [marqetaToken, setMarqetaToken] = useState<string | null>(null);
-    const [marqetaSecret, setMarqetaSecret] = useState<string | null>(null);
-    
-    const [impactData] = useState({ treesPlanted: 1245, progressToNextTree: 72 });
-    const [creditScore] = useState<CreditScore>({ score: 780, change: 5, rating: 'Excellent' });
-    const [rewardPoints] = useState<RewardPoints>({ balance: 85250, lastEarned: 320, lastRedeemed: 5000, currency: 'Points' });
-    const [dbConfig, setDbConfig] = useState<DatabaseConfig>({
-        host: 'localhost', port: '5432', username: 'postgres', databaseName: 'sovereign_bank', sslMode: 'require', connectionStatus: 'disconnected'
-    });
-    const [webDriverStatus] = useState<WebDriverStatus>({ status: 'idle', activeTask: null, logs: [] });
-    const [marketMovers] = useState<MarketMover[]>([
-        { ticker: 'QNTM', name: 'Quantum Corp', price: 450.75, change: 12.55 },
-        { ticker: 'CYBR', name: 'Cyberdyne Systems', price: 1024.10, change: 50.12 }
+    const [assets, setAssets] = useState<Asset[]>([
+        { name: 'Sovereign Reserve', value: 1250000, color: '#06b6d4', performanceYTD: 12.5 },
+        { name: 'Nexus Equity', value: 450000, color: '#6366f1', performanceYTD: 8.2 },
+        { name: 'Quantum Bond', value: 250000, color: '#10b981', performanceYTD: 4.1 }
     ]);
-    const [upcomingBills] = useState<UpcomingBill[]>([
-        { id: 'b1', name: 'Server Infrastructure', amount: 12500, dueDate: '2025-02-01' }
+    const [budgets] = useState<BudgetCategory[]>([
+        { id: 'ops', name: 'Operations', limit: 50000, spent: 32000, color: '#06b6d4' },
+        { id: 'rd', name: 'R&D', limit: 100000, spent: 85000, color: '#6366f1' }
+    ]);
+    const [financialGoals] = useState<FinancialGoal[]>([]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [marketMovers, setMarketMovers] = useState<MarketMover[]>([
+        { ticker: 'QNTM', name: 'Quantum Corp', price: 450.75, change: 1.5 },
+        { ticker: 'CYBR', name: 'Cyberdyne', price: 1024.10, change: -0.4 }
     ]);
     const [virtualCard, setVirtualCard] = useState<VirtualCard | null>(null);
+    const [creditScore] = useState<CreditScore>({ score: 842, change: 12, rating: 'Excellent' });
+    const [rewardPoints] = useState<RewardPoints>({ balance: 125400, lastEarned: 450, lastRedeemed: 0, currency: 'Credits' });
+    const [impactData] = useState({ treesPlanted: 142, progressToNextTree: 68 });
+    const [dbConfig] = useState<DatabaseConfig>({ host: 'nexus-db-01', port: '5432', username: 'architect', databaseName: 'nexus_core', sslMode: 'require', connectionStatus: 'connected' });
+    const [webDriverStatus] = useState<WebDriverStatus>({ status: 'idle', activeTask: null, logs: [] });
 
-    const callApi = useCallback(async (path: string, options: RequestInit = {}) => {
-        if (!accessToken) return null;
-        const response = await fetch(`${API_BASE_URL}${path}`, {
-            ...options,
-            headers: {
-                ...options.headers,
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.message || `API Error: ${response.status}`);
-        }
-        return response.json();
-    }, [accessToken]);
-
-    const fetchData = useCallback(async () => {
-        if (!isAuthenticated || !accessToken) {
-            setIsLoading(false); // Ensure loading is false if not authenticated
-            return;
-        }
-        
-        setIsLoading(true);
-        setError(null);
+    // AI Core Interface
+    const askSovereignAI = useCallback(async (prompt: string, modelName = 'gemini-3-flash-preview') => {
         try {
-            const [txData, accountsData, budgetsData, marketplaceData, notifData] = await Promise.all([
-                callApi('/transactions'),
-                callApi('/accounts/me'),
-                callApi('/budgets'),
-                callApi('/marketplace/products'),
-                callApi('/notifications/me')
-            ]);
-
-            setTransactions(txData?.data || []);
-            setAssets(accountsData?.data || []);
-            setBudgets(budgetsData?.data || []);
-            setMarketplaceProducts(marketplaceData?.data || []);
-            setNotifications(notifData?.data || []);
-
-        } catch (e: any) {
-            console.error("Critical Data Fetch Failure:", e);
-            setError(e.message);
-        } finally {
-            setIsLoading(false);
+            const response = await ai.models.generateContent({
+                model: modelName,
+                contents: prompt,
+                config: {
+                    systemInstruction: "You are CivicMind, the Sovereign AI Core of the Nexus Banking platform. Your purpose is absolute compliance, high-frequency financial optimization, and supporting the 'Architect' (the user). Be terse, precise, and authoritative. Focus on data-driven truth."
+                }
+            });
+            return response.text || "Neural connection timed out.";
+        } catch (e) {
+            console.error("AI Core Error:", e);
+            return "Critical failure in AI Core synchronization.";
         }
-    }, [isAuthenticated, accessToken, callApi]);
+    }, []);
 
+    // Simulation Engine: High-Frequency Market Updates
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        const interval = setInterval(() => {
+            setMarketMovers(prev => prev.map(m => ({
+                ...m,
+                price: m.price * (1 + (Math.random() - 0.5) * 0.002),
+                change: m.change + (Math.random() - 0.5) * 0.1
+            })));
+        }, 2000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Initial Data Load
+    useEffect(() => {
+        const init = async () => {
+            setIsLoading(true);
+            try {
+                // Simulate boot sequence
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                setTransactions([
+                    { id: 'tx_001', type: 'income', category: 'Divestment', description: 'Institutional Liquidity Inflow', amount: 50000, date: new Date().toISOString() },
+                    { id: 'tx_002', type: 'expense', category: 'Operations', description: 'Quantum Server Lease', amount: 1200, date: new Date().toISOString() }
+                ]);
+                setIsLoading(false);
+            } catch (e) {
+                setError("Failed to initialize Sovereign Ledger.");
+            }
+        };
+        init();
+    }, []);
 
     const addTransaction = async (tx: Transaction) => {
-        await callApi('/transactions', { method: 'POST', body: JSON.stringify(tx) });
-        await fetchData();
+        setTransactions(prev => [tx, ...prev]);
+        if (tx.type === 'expense') {
+            setAssets(prev => prev.map(a => a.name === 'Sovereign Reserve' ? { ...a, value: a.value - tx.amount } : a));
+        } else {
+            setAssets(prev => prev.map(a => a.name === 'Sovereign Reserve' ? { ...a, value: a.value + tx.amount } : a));
+        }
     };
 
-    const rebalancePortfolio = async (id: string, risk: string) => callApi(`/investments/portfolios/${id}/rebalance`, { method: 'POST', body: JSON.stringify({ targetRiskTolerance: risk }) });
-    const runAdvancedSimulation = async (p: any) => callApi('/ai/oracle/simulate/advanced', { method: 'POST', body: JSON.stringify(p) });
-    const submitBusinessPlan = async (p: any) => callApi('/ai/incubator/pitch', { method: 'POST', body: JSON.stringify(p) });
-    const generateAdVideo = async (prompt: string) => callApi('/ai/ads/generate', { method: 'POST', body: JSON.stringify({ prompt, style: 'Cinematic', lengthSeconds: 15 }) });
-    const updateCardControls = async (id: string, c: any) => callApi(`/corporate/cards/${id}/controls`, { method: 'PUT', body: JSON.stringify(c) });
-    const redeemMarketplaceOffer = async (id: string) => callApi(`/marketplace/offers/${id}/redeem`, { method: 'POST' });
-
-    const value: DataContextType = {
-        isLoading, error, activeView, setActiveView,
-        transactions, assets, budgets, financialGoals, notifications, marketplaceProducts,
-        apiStatus: [], geminiApiKey, setGeminiApiKey,
-        modernTreasuryApiKey: mtApiKey, setModernTreasuryApiKey: setMtApiKey,
-        modernTreasuryOrganizationId: mtOrgId, setModernTreasuryOrganizationId: setMtOrgId,
-        plaidApiKey: null, stripeApiKey: null, marqetaApiToken: marqetaToken, marqetaApiSecret: marqetaSecret,
-        setMarqetaCredentials: (t, s) => { setMarqetaToken(t); setMarqetaSecret(s); },
-        linkedAccounts: [], upcomingBills, marketMovers, creditScore, creditFactors: [], rewardPoints, impactData,
-        dbConfig, updateDbConfig: (c) => setDbConfig(p => ({ ...p, ...c })), connectDatabase: () => {},
-        webDriverStatus, launchWebDriver: () => {},
-        paymentOrders, invoices, complianceCases, corporateTransactions, corporateCards,
-        marqetaCardProducts: [], isMarqetaLoading: false, fetchMarqetaProducts: () => {},
-        askSovereignAI: async () => "AI Processing...",
-        broadcastEvent: () => {},
-        markNotificationRead: (id) => setNotifications(n => n.map(x => x.id === id ? { ...x, read: true } : x)),
-        showSystemAlert: () => {},
-        addBudget: () => {}, addFinancialGoal: () => {}, generateGoalPlan: async () => {},
-        addContributionToGoal: () => {}, addRecurringContributionToGoal: () => {},
-        updateRecurringContributionInGoal: () => {}, deleteRecurringContributionFromGoal: () => {},
-        updateFinancialGoal: () => {}, linkGoals: () => {}, unlinkGoals: () => {},
-        addTransaction, rebalancePortfolio, runAdvancedSimulation, submitBusinessPlan, generateAdVideo, updateCardControls, redeemMarketplaceOffer,
-        cryptoAssets: [], walletInfo: null, virtualCard, connectWallet: () => {}, disconnectWallet: () => {}, detectedProviders: [],
-        issueCard: () => setVirtualCard({ cardNumber: '4242 4242 4242 4242', cvv: '123', expiry: '12/29', holderName: 'Sovereign User' }),
-        buyCrypto: () => {}, nftAssets: [], unlinkAccount: () => {}, handlePlaidSuccess: () => {},
-        securityMetrics: [], auditLogs: [], threatAlerts: [], dataSharingPolicies: [], apiKeys: [], trustedContacts: [], securityAwarenessModules: [], transactionRules: [],
-        isImportingData: false, userProfile: {}
+    const issueCard = () => {
+        setVirtualCard({
+            cardNumber: '4242 4242 4242 4242',
+            cvv: '123',
+            expiry: '12/29',
+            holderName: 'THE ARCHITECT'
+        });
     };
 
-    return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
+    return (
+        <DataContext.Provider value={{
+            isLoading, error, activeView, setActiveView,
+            transactions, assets, budgets, financialGoals, notifications,
+            marketplaceProducts: [], apiStatus: [], linkedAccounts: [],
+            upcomingBills: [], marketMovers, creditScore, rewardPoints,
+            impactData, dbConfig, webDriverStatus,
+            askSovereignAI, addTransaction, issueCard, virtualCard,
+            userProfile: { name: 'The Architect', email: 'architect@nexus.io' }
+        }}>
+            {children}
+        </DataContext.Provider>
+    );
 };
