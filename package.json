@@ -65,7 +65,7 @@
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-label": "^2.1.8",
     "jspdf-autotable": "^5.0.2",
-    "jspdf": "^3.0.4",
+    "jspdf": "^4.2.0",
     "@heroicons/react": "^2.2.0",
     "express": "^5.2.1",
     "url": "^0.11.4",
